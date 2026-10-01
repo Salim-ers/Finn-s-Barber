@@ -41,7 +41,7 @@ Node.js 20.9 ou plus récent.
 ## Modifier le contenu
 Tout est centralisé dans **`lib/data.ts`** : coordonnées, horaires, tarifs, prestations, équipe, avis, galerie, journal, mentions légales.
 
-À compléter (affiché « [À renseigner] » tant que vide) : `phone`, `email`, `tiktok`, `legal.capital`, crédits photo.
+À compléter (affiché « [À renseigner] » tant que vide) : `phone`, `email`, `tiktok`, `legal.capital`.
 À vérifier : `legal.host` (Vercel Inc.) et le compte Instagram `@finns.barber`.
 
 ### Photos et vidéos
@@ -52,6 +52,8 @@ Tout est centralisé dans **`lib/data.ts`** : coordonnées, horaires, tarifs, pr
    cut:  { ..., video: "/media/the-cut.mp4", poster: "/media/the-cut.jpg" }
    ```
 Tant qu’un `src` est vide, un emplacement « Photo à fournir » s’affiche. Next.js convertit les images en AVIF/WebP.
+
+**Photos actuelles :** `salon.jpg` et `salon-fauteuils.jpg` sont de vraies photos du salon. Les autres sont des photos d’illustration Unsplash (licence libre, usage commercial autorisé) : à remplacer par des photos du salon, en retirant au fur et à mesure les photographes de `photoCredits` dans `lib/data.ts`. Les portraits de l’équipe restent volontairement vides : ils doivent montrer les vrais barbers.
 
 ### Avis clients
 `reviews` dans `lib/data.ts` : note, nombre d’avis et date de relevé à mettre à jour. Uniquement des avis réels, avec l’accord de leurs auteurs.

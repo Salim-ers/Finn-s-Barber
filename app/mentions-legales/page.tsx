@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { salon } from "@/lib/data";
+import { photoCredits, salon } from "@/lib/data";
 import { fullAddress } from "@/lib/site";
 import { pageMeta } from "@/lib/seo";
 import { Todo } from "@/components/ui";
@@ -32,7 +32,8 @@ export default function Mentions() {
       <h2>Propriété intellectuelle</h2>
       <p>L’ensemble des éléments de ce site (textes, logo, identité visuelle, photographies, mise en page) est la propriété de {L.company} ou de ses partenaires. Toute reproduction ou réutilisation sans autorisation écrite préalable est interdite.</p>
       <h2>Crédits photographiques</h2>
-      <p><Todo /></p>
+      <p>{photoCredits.salon}</p>
+      <p>Photographies d’illustration : {photoCredits.stock.authors.join(", ")}, via {photoCredits.stock.source} (<a href={photoCredits.stock.license} target="_blank" rel="noopener">licence {photoCredits.stock.source}</a>).</p>
       <h2>Réservation en ligne</h2>
       <p>Les rendez-vous sont pris via la plateforme Planity, qui applique ses propres <a href="https://www.planity.com/cgu" target="_blank" rel="noopener">conditions générales d’utilisation</a>.</p>
       <h2>Liens externes</h2>

@@ -14,7 +14,7 @@ export function Hero() {
       </div>
       <div className="hero-stage">
         <div className="hw hw-1 wm" aria-hidden="true"><span className="ln"><span className="ln-i">Finn’s</span></span></div>
-        <div className="hero-img"><Fig m={media.hero} eager sizes="(max-width: 900px) 50vw, 30vw" /></div>
+        <div className="hero-img"><Fig m={media.hero} eager sizes="100vw" /></div>
         <div className="hw hw-2 wm" aria-hidden="true"><span className="ln"><span className="ln-i">Barber</span></span></div>
       </div>
       <div className="hero-line"><FLine className="fline--manual" /></div>

@@ -87,37 +87,52 @@ export const reviews: Reviews = {
 
 /* Photos & vidéos : déposer les fichiers dans /public/media puis renseigner src (ex. "/media/hero.jpg")
    ou video (ex. "/media/hero.mp4") + poster.
-   Tant que src est vide, un emplacement de direction artistique s’affiche. */
+   Tant que src est vide, un emplacement de direction artistique s’affiche.
+   ⚠ PHOTOS D’ILLUSTRATION : seules salon.jpg et salon-fauteuils.jpg montrent le vrai salon.
+   Toutes les autres viennent d’Unsplash (licence libre, voir photoCredits) et servent à
+   visualiser le rendu : les remplacer par des photos du salon avant la mise en ligne définitive,
+   puis retirer les crédits correspondants. */
 export const media: Record<string, Media> = {
-  hero:    { note: "Barber en plein dégradé, mains et tondeuse", alt: "Barber de Finn’s Barber réalisant un dégradé", tone: "navy", src: "", video: "", poster: "" },
-  intro:   { note: "Le salon, lumière du jour", alt: "Intérieur du salon Finn’s Barber à Creil", tone: "warm", src: "" },
-  intro2:  { note: "Détail : peigne et ciseaux", alt: "Peigne et ciseaux de barbier", tone: "cream", src: "" },
-  cut:     { note: "Finition des contours au rasoir, plein cadre", alt: "Finition des contours au rasoir", tone: "navy", src: "", video: "" },
-  g1:      { note: "Ciseaux sur peigne", alt: "Coupe aux ciseaux sur peigne", tone: "warm", src: "" },
-  g2:      { note: "Tondeuse, transition du dégradé", alt: "Dégradé à la tondeuse", tone: "navy", src: "" },
-  g3:      { note: "Structure au peigne, face au miroir", alt: "Mise en forme de la coupe au peigne", tone: "cream", src: "" },
-  g4:      { note: "Contour net, barbe taillée", alt: "Finitions de la barbe et des contours", tone: "warm", src: "" },
-  s1:      { note: "Coupe, vue de profil", alt: "Coupe homme vue de profil", tone: "navy", src: "" },
-  s2:      { note: "Coupe + barbe, finitions", alt: "Coupe et barbe terminées", tone: "warm", src: "" },
-  story:   { note: "Le salon aujourd’hui, vue d’ensemble", alt: "Le salon Finn’s Barber", tone: "warm", src: "" },
-  archive: { note: "Archive familiale, si disponible", alt: "Photographie d’archive de la famille", tone: "cream", src: "" },
-  facade:  { note: "La façade, 43 rue Jean Jaurès", alt: "Façade de Finn’s Barber, 43 rue Jean Jaurès à Creil", tone: "navy", src: "" },
-  logo:    { note: "Coupe en cours, cadrage serré", alt: "Coupe en cours chez Finn’s Barber", tone: "warm", src: "" }
+  hero:    { note: "Barber en plein dégradé, mains et tondeuse", alt: "Barber réalisant un dégradé à la tondeuse", tone: "navy", src: "/media/hero-degrade.jpg", video: "", poster: "" },
+  intro:   { note: "Le salon, lumière du jour", alt: "Intérieur du salon Finn’s Barber à Creil", tone: "warm", src: "/media/salon.jpg" },
+  intro2:  { note: "Détail : peigne et ciseaux", alt: "Ciseaux de barbier en main", tone: "cream", src: "/media/ciseaux.jpg" },
+  cut:     { note: "Finition des contours au rasoir, plein cadre", alt: "Finition au rasoir", tone: "navy", src: "/media/finition-rasoir.jpg", video: "" },
+  g1:      { note: "Ciseaux sur peigne", alt: "Coupe aux ciseaux sur peigne", tone: "warm", src: "/media/geste-couper.jpg" },
+  g2:      { note: "Tondeuse, transition du dégradé", alt: "Dégradé à la tondeuse", tone: "navy", src: "/media/geste-degrader.jpg" },
+  g3:      { note: "Structure au peigne, face au miroir", alt: "Mise en forme de la coupe au peigne", tone: "cream", src: "/media/geste-structurer.jpg" },
+  g4:      { note: "Contour net, barbe taillée", alt: "Contours au rasoir et barbe taillée", tone: "warm", src: "/media/geste-finaliser.jpg" },
+  s1:      { note: "Coupe, vue de profil", alt: "Coupe homme vue de profil", tone: "navy", src: "/media/prestation-coupe.jpg" },
+  s2:      { note: "Coupe + barbe, finitions", alt: "Taille de barbe aux ciseaux", tone: "warm", src: "/media/prestation-coupe-barbe.jpg" },
+  story:   { note: "Le salon aujourd’hui, vue d’ensemble", alt: "Le salon Finn’s Barber", tone: "warm", src: "/media/salon.jpg" },
+  archive: { note: "Archive familiale, si disponible", alt: "Fauteuil de barbier ancien dans la lumière", tone: "cream", src: "/media/heritage-fauteuil.jpg" },
+  facade:  { note: "La façade, 43 rue Jean Jaurès", alt: "Fauteuils de barbier derrière une vitrine", tone: "navy", src: "/media/vitrine.jpg" },
+  logo:    { note: "Coupe en cours, cadrage serré", alt: "Coupe en cours à la tondeuse", tone: "warm", src: "/media/coupe-en-cours.jpg" }
 };
 
 export const gallery: GalleryItem[] = ([
-  { cat: "fades",   size: "l", ratio: "4/5",   tone: "navy",  note: "Dégradé bas, vue de dos" },
-  { cat: "details", size: "s", ratio: "1/1",   tone: "cream", note: "Tondeuse sur le plan de travail" },
-  { cat: "cuts",    size: "m", ratio: "3/4",   tone: "warm",  note: "Coupe texturée, vue de face" },
-  { cat: "beards",  size: "m", ratio: "4/5",   tone: "navy",  note: "Barbe taillée, profil" },
-  { cat: "shop",    size: "l", ratio: "16/10", tone: "warm",  note: "Les fauteuils et les miroirs" },
-  { cat: "details", size: "s", ratio: "3/4",   tone: "navy",  note: "Rasoir et contour" },
-  { cat: "cuts",    size: "s", ratio: "4/5",   tone: "cream", note: "Coupe courte aux ciseaux" },
-  { cat: "fades",   size: "m", ratio: "1/1",   tone: "warm",  note: "Transition du dégradé, gros plan" },
-  { cat: "beards",  size: "s", ratio: "3/4",   tone: "navy",  note: "Ligne de barbe au rasoir" },
-  { cat: "shop",    size: "m", ratio: "4/3",   tone: "cream", note: "Le salon, lumière du soir" }
-] as Omit<GalleryItem, "alt" | "src">[]).map(g => ({ ...g, alt: g.note, src: "" }));
+  { cat: "fades",   size: "l", ratio: "4/5",   tone: "navy",  note: "Dégradé bas, vue de dos", src: "/media/galerie-degrade-nuque.jpg" },
+  { cat: "details", size: "s", ratio: "1/1",   tone: "cream", note: "Tondeuse sur le plan de travail", src: "/media/galerie-tondeuses.jpg" },
+  { cat: "cuts",    size: "m", ratio: "3/4",   tone: "warm",  note: "Coupe texturée, vue de face", src: "/media/galerie-coupe-texturee.jpg" },
+  { cat: "beards",  size: "m", ratio: "4/5",   tone: "navy",  note: "Barbe taillée, profil", src: "/media/galerie-barbe-profil.jpg" },
+  { cat: "shop",    size: "l", ratio: "16/10", tone: "warm",  note: "Les fauteuils et les miroirs", src: "/media/salon.jpg" },
+  { cat: "details", size: "s", ratio: "3/4",   tone: "navy",  note: "Rasoir et contour", src: "/media/galerie-rasoir-contour.jpg" },
+  { cat: "cuts",    size: "s", ratio: "4/5",   tone: "cream", note: "Coupe courte aux ciseaux", src: "/media/galerie-ciseaux.jpg" },
+  { cat: "fades",   size: "m", ratio: "1/1",   tone: "warm",  note: "Transition du dégradé, gros plan", src: "/media/galerie-transition.jpg" },
+  { cat: "beards",  size: "s", ratio: "3/4",   tone: "navy",  note: "Ligne de barbe au rasoir", src: "/media/galerie-ligne-barbe.jpg" },
+  { cat: "shop",    size: "m", ratio: "4/3",   tone: "cream", note: "La rangée de fauteuils", src: "/media/salon-fauteuils.jpg" }
+] as Omit<GalleryItem, "alt">[]).map(g => ({ ...g, alt: g.note }));
 export const CAT: Record<string, string> = { all: "Tout", cuts: "Coupes", fades: "Dégradés", beards: "Barbes", details: "Détails", shop: "Le salon" };
+
+/* Crédits photo (affichés dans les mentions légales). Retirer un photographe dès que sa photo est remplacée. */
+export const photoCredits = {
+  salon: "Photographies du salon : Finn’s Barber.",
+  stock: { source: "Unsplash", license: "https://unsplash.com/license", authors: [
+    "Ace Maxwell", "Agustin Fernandez", "Ahmad Ebadi", "André Reis", "Damian Barczak", "Daria Andriianova",
+    "Eduardo Cano Photo Co.", "Fábio Alves", "Gulom Nazarov", "Hai Phung", "Hannah Skelly", "Jerry Wei",
+    "Josh Marty", "Mitchell Orr", "Mr Shave", "Nate Johnston", "Nathon Oski", "Peter Vimalis",
+    "Redd Francisco", "Salah Regouane", "Tá Focando", "Ten", "YearOne"
+  ] }
+};
 
 export const timeline = [
   { year: "1960s", title: "Les origines", text: "Premières racines du savoir-faire familial." },
@@ -137,7 +152,7 @@ export const journal: Article[] = [
   { slug: "combien-de-temps-garder-son-degrade", cat: "Entretien", date: "2026-09-22",
     title: "Combien de temps garder son dégradé ?",
     excerpt: "Un dégradé est net le jour J. Mais combien de temps reste-t-il propre ? Quelques repères pour savoir quand revenir.",
-    cover: { note: "Dégradé, gros plan sur la nuque", tone: "navy" },
+    cover: { note: "Dégradé, gros plan sur la nuque", tone: "navy", src: "/media/journal-degrade.jpg" },
     body: [
       { p: "Un dégradé se joue sur quelques millimètres. C’est ce qui fait sa netteté, et c’est aussi ce qui le rend éphémère : le cheveu pousse d’environ un centimètre par mois, et sur les zones les plus courtes, chaque millimètre se voit." },
       { h: "Les repères" },
@@ -150,7 +165,7 @@ export const journal: Article[] = [
   { slug: "comment-entretenir-sa-barbe", cat: "Barbe", date: "2026-09-08",
     title: "Comment entretenir sa barbe ?",
     excerpt: "Une barbe soignée ne dépend pas seulement de la taille. Ce qui se passe entre deux rendez-vous compte autant.",
-    cover: { note: "Barbe taillée, lumière rasante", tone: "warm" },
+    cover: { note: "Barbe taillée, lumière rasante", tone: "warm", src: "/media/journal-barbe.jpg" },
     body: [
       { p: "Une barbe soignée ne dépend pas seulement de la taille. Ce qui se passe entre deux passages chez le barber compte autant." },
       { h: "Laver sans dessécher" },
@@ -165,7 +180,7 @@ export const journal: Article[] = [
   { slug: "quelle-coupe-homme-choisir", cat: "Style", date: "2026-08-25",
     title: "Quelle coupe homme choisir ?",
     excerpt: "Il n’y a pas de bonne coupe dans l’absolu. Il y a celle qui va avec votre visage, votre cheveu et vos matins.",
-    cover: { note: "Coupe texturée, vue de trois quarts", tone: "cream" },
+    cover: { note: "Coupe texturée, vue de trois quarts", tone: "cream", src: "/media/journal-coupe.jpg" },
     body: [
       { p: "Il n’y a pas de bonne coupe dans l’absolu. Il y a celle qui va avec votre visage, votre cheveu et votre façon de vivre." },
       { h: "Partir du visage" },
@@ -180,7 +195,7 @@ export const journal: Article[] = [
   { slug: "comment-garder-des-contours-propres", cat: "Entretien", date: "2026-08-11",
     title: "Comment garder des contours propres ?",
     excerpt: "Les contours sont la première chose qui trahit une coupe qui vieillit. Quelques réflexes suffisent.",
-    cover: { note: "Contour au rasoir, tempe", tone: "navy" },
+    cover: { note: "Contour au rasoir, tempe", tone: "navy", src: "/media/journal-contours.jpg" },
     body: [
       { p: "Les contours sont la première chose qui trahit une coupe qui vieillit. Quelques réflexes suffisent pour les préserver." },
       { h: "Ne pas toucher à la ligne" },
@@ -195,7 +210,7 @@ export const journal: Article[] = [
   { slug: "a-quelle-frequence-retourner-chez-le-barber", cat: "Conseils", date: "2026-07-28",
     title: "À quelle fréquence retourner chez le barber ?",
     excerpt: "Tout dépend de la longueur et de la précision que vous voulez garder. Les rythmes qui fonctionnent.",
-    cover: { note: "Le fauteuil, en attendant le prochain client", tone: "warm" },
+    cover: { note: "Le fauteuil, en attendant le prochain client", tone: "warm", src: "/media/salon.jpg" },
     body: [
       { p: "Tout dépend de la longueur et de la précision que vous voulez garder." },
       { h: "Coupes courtes et dégradés" },
@@ -210,7 +225,7 @@ export const journal: Article[] = [
   { slug: "comment-preparer-sa-prochaine-coupe", cat: "Conseils", date: "2026-07-14",
     title: "Comment préparer sa prochaine coupe ?",
     excerpt: "Une bonne coupe commence avant d’arriver au salon. Ce qu’il faut savoir, et ce qu’il faut dire.",
-    cover: { note: "Miroir, avant la coupe", tone: "cream" },
+    cover: { note: "Miroir, avant la coupe", tone: "cream", src: "/media/journal-miroir.jpg" },
     body: [
       { p: "Une bonne coupe commence avant d’arriver au salon." },
       { h: "Venir avec une idée, même vague" },
