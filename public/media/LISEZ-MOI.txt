@@ -1,0 +1,6 @@
+Déposez ici les photos et vidéos du salon (JPG/PNG/WebP/AVIF pour les images, MP4/WebM pour les vidéos).
+Puis renseignez leur chemin dans lib/data.ts, par exemple :
+  hero: { ..., src: "/media/hero.jpg" }
+  cut:  { ..., video: "/media/the-cut.mp4", poster: "/media/the-cut.jpg" }
+Next.js convertit automatiquement les images en AVIF/WebP aux bonnes tailles.
+Vidéos : boucles de 5 à 10 s, sans son, idéalement < 4 Mo.
