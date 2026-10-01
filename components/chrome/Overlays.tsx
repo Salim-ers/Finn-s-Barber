@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { salon } from "@/lib/data";
 import { telHref } from "@/lib/site";
 import { Arr, FLine } from "@/components/ui";
 
@@ -33,7 +32,7 @@ export function MobileBar() {
   return (
     <div className="mbar">
       {telHref ? <a className="mbar-call" href={telHref}>Appeler</a> : <Link className="mbar-call" href="/contact">Appeler</Link>}
-      <a className="mbar-book" href={salon.planity} target="_blank" rel="noopener">Prendre RDV <Arr /><span className="sr"> (Planity, nouvel onglet)</span></a>
+      <Link className="mbar-book" href="/reserver">Prendre RDV <Arr /></Link>
     </div>
   );
 }

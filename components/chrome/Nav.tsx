@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { salon } from "@/lib/data";
 import { NAV, MNAV, pad2 } from "@/lib/site";
 import { Arr, FLine, BookButton } from "@/components/ui";
 
@@ -43,7 +42,7 @@ export default function Nav() {
         <nav className="nav-links" aria-label="Navigation principale">
           {NAV.map(([h, l]) => <Link key={h} href={h} aria-current={top === h ? "page" : undefined}>{l}</Link>)}
         </nav>
-        <a className="btn nav-cta mag" href={salon.planity} target="_blank" rel="noopener">Prendre RDV <Arr /><span className="sr"> (Planity, nouvel onglet)</span></a>
+        <Link className="btn nav-cta mag" href="/reserver">Prendre RDV <Arr /></Link>
         <button ref={burger} className="nav-burger" type="button" aria-expanded={open} aria-controls="mmenu" onClick={() => setOpen(o => !o)}>
           <span /><span /><span className="sr">{open ? "Fermer le menu" : "Ouvrir le menu"}</span>
         </button>

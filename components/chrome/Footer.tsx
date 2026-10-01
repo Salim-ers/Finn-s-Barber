@@ -23,9 +23,8 @@ export default function Footer() {
           <div className="ft-col">
             <h2 className="label">Réserver &amp; suivre</h2>
             <ul>
-              <li><a className="ul" href={salon.planity} target="_blank" rel="noopener">Planity</a></li>
+              <li><Link className="ul" href="/reserver">Prendre rendez-vous</Link></li>
               {salon.instagram && <li><a className="ul" href={salon.instagram} target="_blank" rel="noopener">Instagram</a></li>}
-              {salon.tiktok && <li><a className="ul" href={salon.tiktok} target="_blank" rel="noopener">TikTok</a></li>}
             </ul>
           </div>
           <div className="ft-col">

@@ -3,6 +3,7 @@ import { salon, type Article } from "./data";
 export const A = salon.address;
 export const fullAddress = `${A.street}, ${A.postalCode} ${A.city}`;
 export const mapsUrl = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(`Finn's Barber, ${fullAddress}`);
+export const mapsEmbedUrl = "https://maps.google.com/maps?q=" + encodeURIComponent(fullAddress) + "&z=17&hl=fr&output=embed";
 export const telHref = salon.phone ? "tel:" + salon.phone.replace(/[^\d+]/g, "") : "";
 export const pad2 = (n: number) => String(n).padStart(2, "0");
 
@@ -47,5 +48,5 @@ export function openStatus() {
 export const fmtDate = (iso: string) => new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 export const readTime = (a: Article) => Math.max(2, Math.round(a.body.map(b => ("p" in b ? b.p : b.h)).join(" ").split(/\s+/).length / 200));
 
-export const NAV: [string, string][] = [["/", "Accueil"], ["/histoire", "Notre histoire"], ["/prestations", "Prestations"], ["/equipe", "L’équipe"], ["/galerie", "Galerie"], ["/journal", "Journal"], ["/contact", "Contact"]];
-export const MNAV: [string, string][] = [["/", "Accueil"], ["/histoire", "Histoire"], ["/prestations", "Prestations"], ["/equipe", "Équipe"], ["/galerie", "Galerie"], ["/journal", "Journal"], ["/contact", "Contact"]];
+export const NAV: [string, string][] = [["/", "Accueil"], ["/histoire", "Notre histoire"], ["/prestations", "Prestations"], ["/galerie", "Galerie"], ["/avis", "Avis"], ["/conseils", "Conseils"], ["/contact", "Contact"]];
+export const MNAV: [string, string][] = [["/", "Accueil"], ["/histoire", "Histoire"], ["/prestations", "Prestations"], ["/galerie", "Galerie"], ["/avis", "Avis"], ["/conseils", "Conseils"], ["/contact", "Contact"]];

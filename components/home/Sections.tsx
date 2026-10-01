@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { gallery, media, salon, steps, team, type GalleryItem } from "@/lib/data";
+import { gallery, media, salon, steps, type GalleryItem } from "@/lib/data";
 import { A, pad2 } from "@/lib/site";
-import { Arr, BookButton, FLine, Fig, Lines, ServiceRows, TeamCard, Timeline } from "@/components/ui";
+import { Arr, BookButton, FLine, Fig, Lines, ServiceRows, Timeline } from "@/components/ui";
 
 export function Hero() {
   return (
@@ -84,7 +84,7 @@ export function ServicesTeaser() {
           <Link className="link-more fade" href="/prestations"><span className="ul">Toutes les prestations</span> <Arr /></Link>
         </div>
         <ServiceRows />
-        <p className="svc-note fade">Réservation en ligne 24h/24 sur Planity, confirmation immédiate.</p>
+        <p className="svc-note fade">Réservation en ligne 24h/24, confirmation immédiate.</p>
       </div>
     </section>
   );
@@ -129,19 +129,6 @@ export function Geste() {
           </div>
         </div>
       </div>
-    </section>
-  );
-}
-
-export function TeamTeaser() {
-  return (
-    <section className="sec navy">
-      <div className="wrap">
-        <p className="label tick fade">The team</p>
-        <h2 className="d d-l split"><Lines text={"Les visages\nderrière\nFinn’s."} /></h2>
-      </div>
-      <div className="team-row">{team.map((t, i) => <TeamCard t={t} i={i} small key={t.name} />)}</div>
-      <div className="wrap team-foot"><Link className="btn btn--ghost" href="/equipe">Rencontrer l’équipe <Arr /></Link></div>
     </section>
   );
 }

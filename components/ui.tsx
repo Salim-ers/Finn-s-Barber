@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { salon, services, timeline, media, reviews, type Media, type TeamMember } from "@/lib/data";
+import { services, timeline, media, reviews, type Media, type Review } from "@/lib/data";
 import { A, pad2 } from "@/lib/site";
 
 /* Titre découpé en lignes masquées (reveal vertical) */
@@ -23,11 +23,12 @@ export function FLine({ text = "Since 1999", className = "" }: { text?: string; 
   );
 }
 
-export function BookButton({ label = "Prendre rendez-vous", className = "" }: { label?: string; className?: string }) {
+/* Réservation en ligne, directement sur le site */
+export function BookButton({ label = "Prendre rendez-vous", className = "", service }: { label?: string; className?: string; service?: string }) {
   return (
-    <a className={`btn mag ${className}`} href={salon.planity} target="_blank" rel="noopener">
-      {label} <Arr /><span className="sr"> (Planity, nouvel onglet)</span>
-    </a>
+    <Link className={`btn mag ${className}`} href={service ? `/reserver?service=${service}` : "/reserver"}>
+      {label} <Arr />
+    </Link>
   );
 }
 
@@ -48,7 +49,7 @@ export function Fig({ m, n, ratio, fill, className = "", speed, eager, sizes = "
             <source src={m.video} type={/\.webm$/.test(m.video) ? "video/webm" : "video/mp4"} />
           </video>
         ) : m.src ? (
-          <Image className="fig-media" src={m.src} alt={m.alt} fill sizes={sizes} priority={!!eager} />
+          <Image className="fig-media" src={m.src} alt={m.alt} fill sizes={sizes} priority={!!eager} style={m.pos ? { objectPosition: m.pos } : undefined} />
         ) : (
           <>
             <div className="ph-art" />
@@ -117,14 +118,14 @@ export function ServiceRows() {
     <ul className="svc-list">
       {services.map((s, i) => (
         <li className="svc-row" key={s.id}>
-          <a href={salon.planity} target="_blank" rel="noopener" data-cursor="book" data-prev={i} aria-label={`Réserver : ${s.name}, ${s.duration}, ${s.price} (Planity, nouvel onglet)`}>
+          <Link href={`/reserver?service=${s.id}`} data-cursor="book" data-prev={i} aria-label={`Réserver : ${s.name}, ${s.duration}, ${s.price}`}>
             <span className="svc-n">{pad2(i + 1)}</span>
             <span className="svc-name">{s.name}</span>
             <span className="svc-desc">{s.short}</span>
             <span className="svc-dur">{s.duration.toUpperCase()}</span>
             <span className="svc-price">{s.price}</span>
             <span className="svc-cta">Réserver <Arr /></span>
-          </a>
+          </Link>
         </li>
       ))}
     </ul>
@@ -140,36 +141,43 @@ export function ServicePreview() {
   );
 }
 
-export function TeamCard({ t, i, small }: { t: TeamMember; i: number; small?: boolean }) {
+/* Note globale et critères, relevés sur la fiche Planity du salon */
+export function RatingSummary() {
   return (
-    <Link className="tm" href="/equipe">
-      <div className="tm-img">
-        <Fig m={{ src: t.photo, alt: `Portrait de ${t.name}, Finn’s Barber`, note: `Portrait, ${t.name}`, tone: i % 2 ? "warm" : "navy", initial: t.name[0] }} ratio="3/4" className={small ? "fig--sm" : ""} sizes="(max-width: 900px) 64vw, 20vw" />
-      </div>
-      <span className="tm-name">{t.name}</span>
-      <span className="tm-line" aria-hidden="true" />
-      <span className="tm-sub label">Finn’s Barber</span>
-    </Link>
+    <>
+      <p className="rv-num" aria-label={`Note moyenne ${reviews.rating} sur 5`}>{reviews.rating}</p>
+      <p className="rv-stars" aria-hidden="true">★★★★★</p>
+      <p className="rv-meta">{reviews.count} avis clients vérifiés sur {reviews.source}<br />Note relevée le {reviews.checkedAt}</p>
+      <ul className="rv-crit">{reviews.criteria.map(([k, v]) => <li key={k}><span>{k}</span><span>{v}</span></li>)}</ul>
+    </>
+  );
+}
+
+export function ReviewCard({ r }: { r: Review }) {
+  return (
+    <figure className="rv-card">
+      <p className="rv-card-stars" aria-label="5 étoiles sur 5">★★★★★</p>
+      <blockquote><p>{r.text}</p></blockquote>
+      <figcaption className="label">{r.author} <span aria-hidden="true">·</span> {r.date}</figcaption>
+    </figure>
   );
 }
 
 export function ReviewsSection() {
+  const [featured, ...rest] = reviews.items;
+  const picks = rest.filter(r => r.text.length > 45 && r.text.length < 230).slice(0, 4);
   return (
     <section className="sec warm">
       <div className="wrap rv-grid">
         <div>
           <p className="label tick fade">Clients / Finn’s</p>
-          <p className="rv-num" aria-label={`Note moyenne ${reviews.rating} sur 5`}>{reviews.rating}</p>
-          <p className="rv-stars" aria-hidden="true">★★★★★</p>
-          <p className="rv-meta">{reviews.count} avis clients sur {reviews.source}<br />Note relevée le {reviews.checkedAt}</p>
-          <ul className="rv-crit">{reviews.criteria.map(([k, v]) => <li key={k}><span>{k}</span><span>{v}</span></li>)}</ul>
+          <RatingSummary />
         </div>
         <div>
           <h2 className="d d-m split"><Lines text={"Les clients\nparlent\npour nous."} /></h2>
-          {reviews.items.map((r, i) => (
-            <blockquote className="rv-quote fade" key={i}><p>“{r.text}”</p><footer className="label">{r.author}, {r.date}</footer></blockquote>
-          ))}
-          <a className="link-more" href={reviews.url} target="_blank" rel="noopener"><span className="ul">Lire tous les avis sur Planity</span> <Arr /></a>
+          <blockquote className="rv-quote fade"><p>“{featured.text}”</p><footer className="label">{featured.author}, {featured.date}</footer></blockquote>
+          <div className="rv-cards fade">{picks.map(r => <ReviewCard r={r} key={r.text} />)}</div>
+          <Link className="link-more" href="/avis"><span className="ul">Lire les {reviews.items.length} avis</span> <Arr /></Link>
         </div>
       </div>
     </section>
