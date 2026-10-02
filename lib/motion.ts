@@ -213,12 +213,12 @@ export function initCursor() {
 export function runLoader(done: () => void) {
   const loader = $("#loader");
   const root = document.documentElement;
-  if (!loader || root.classList.contains("no-loader") || !isMotion()) { loader?.remove(); done(); return; }
+  if (!loader || root.classList.contains("no-loader") || !isMotion()) { if (loader) loader.style.display = "none"; done(); return; }
   try { sessionStorage.setItem("finns-loader", "1"); } catch { /* stockage indisponible */ }
   lenis?.stop();
   const ldIn = $(".ld-in", loader)!, lns = $$(".ln-i", ldIn);
   gsap.set(lns, { y: 0, yPercent: 110 }); gsap.set(ldIn, { opacity: 1 });
-  gsap.timeline({ onComplete: () => { loader.remove(); lenis?.start(); } })
+  gsap.timeline({ onComplete: () => { loader.style.display = "none"; lenis?.start(); } }) // masqué, pas retiré : l’élément appartient à React
     .to(lns[0], { yPercent: 0, duration: 0.5, ease: "power3.out" }, 0.05)
     .to(lns[1], { yPercent: 0, duration: 0.5, ease: "power3.out" }, 0.18)
     .add(() => $(".fline", ldIn)?.classList.add("on"), 0.3)

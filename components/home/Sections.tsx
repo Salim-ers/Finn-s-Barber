@@ -1,11 +1,16 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { gallery, media, salon, steps, type GalleryItem } from "@/lib/data";
 import { A, pad2 } from "@/lib/site";
 import { Arr, BookButton, FLine, Fig, Lines, ServiceRows, Timeline } from "@/components/ui";
 
+/* Sections épinglées au défilement : GSAP les déplace dans un conteneur « pin-spacer ».
+   Cette enveloppe reste à sa place dans la page, React peut donc la retirer au changement de page sans erreur. */
+const Pinned = ({ children }: { children: ReactNode }) => <div className="pinned">{children}</div>;
+
 export function Hero() {
   return (
-    <section className="hero" id="hero">
+    <Pinned><section className="hero" id="hero">
       <h1 className="sr">Finn’s Barber, coiffeur homme et barbier à Creil depuis 1999</h1>
       <div className="hero-meta label">
         <span className="hi-fade">Creil, France</span>
@@ -26,7 +31,7 @@ export function Hero() {
         </div>
       </div>
       <div className="hero-scroll" aria-hidden="true"><span className="hs-in label">Scroll to discover<i /></span></div>
-    </section>
+    </section></Pinned>
   );
 }
 
@@ -92,7 +97,7 @@ export function ServicesTeaser() {
 
 export function TheCut() {
   return (
-    <section className="cut" id="cut">
+    <Pinned><section className="cut" id="cut">
       <div className="cut-bg"><Fig m={media.cut} fill sizes="100vw" /></div>
       <div className="cut-veil" />
       <div className="wrap cut-in">
@@ -101,7 +106,7 @@ export function TheCut() {
           {["Précision", "Geste", "Style"].map(w => <li key={w}><span className="ln"><span className="ln-i">{w}</span></span></li>)}
         </ul>
       </div>
-    </section>
+    </section></Pinned>
   );
 }
 
@@ -165,7 +170,7 @@ export function GalleryTeaser() {
 
 export function LogoSequence() {
   return (
-    <section className="logoseq" id="logoseq" aria-label="Finn’s Barber, since 1999">
+    <Pinned><section className="logoseq" id="logoseq" aria-label="Finn’s Barber, since 1999">
       <div className="ls-photo"><Fig m={media.logo} fill sizes="100vw" /></div>
       <div className="ls-words wm" aria-hidden="true">
         <div className="ls-finns">{["F", "I", "N", "N", "’", "S"].map((l, i) => <span className="ls-l" key={i}>{l}</span>)}</div>
@@ -173,6 +178,6 @@ export function LogoSequence() {
         <div className="ls-line"><FLine className="fline--manual fline--scrub on" /></div>
       </div>
       <div className="ls-navy" />
-    </section>
+    </section></Pinned>
   );
 }
