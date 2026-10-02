@@ -19,20 +19,20 @@ export default function Login({ configured, localDefault }: { configured: boolea
   }
 
   return (
-    <main className="ad-login">
-      <form className="ad-login-card" onSubmit={submit}>
-        <p className="ad-brand">Finn’s<span>Barber · Creil</span></p>
-        <h1 className="ad-title">Tableau de bord</h1>
+    <main className="dsh-login">
+      <form className="dsh-login-card" onSubmit={submit}>
+        <p className="dsh-brand">Finn’s<span>Barber · Creil</span></p>
+        <h1 className="dsh-title">Tableau de bord</h1>
         {configured ? (
           <>
-            <label className="ad-lbl" htmlFor="pw">Mot de passe du salon</label>
-            <input id="pw" className="ad-input" type="password" autoComplete="current-password" value={pw} onChange={e => setPw(e.target.value)} autoFocus />
-            {err && <p className="ad-err" role="alert">{err}</p>}
-            <button className="btn ad-full" type="submit" disabled={busy || !pw}>{busy ? "Connexion…" : "Se connecter"}</button>
-            {localDefault && <p className="ad-hint">En local, le mot de passe par défaut est « finns ». En ligne, définissez ADMIN_PASSWORD dans Vercel.</p>}
+            <label className="dsh-lbl" htmlFor="pw">Mot de passe du salon</label>
+            <input id="pw" className="dsh-input" type="password" autoComplete="current-password" value={pw} onChange={e => setPw(e.target.value)} autoFocus />
+            {err && <p className="dsh-err" role="alert">{err}</p>}
+            <button className="btn dsh-full" type="submit" disabled={busy || !pw}>{busy ? "Connexion…" : "Se connecter"}</button>
+            {localDefault && <p className="dsh-hint">En local, le mot de passe par défaut est « finns ». En ligne, définissez ADMIN_PASSWORD dans Vercel.</p>}
           </>
         ) : (
-          <p className="ad-hint">Le tableau de bord n’est pas encore activé : définissez la variable ADMIN_PASSWORD dans les réglages Vercel, puis redéployez.</p>
+          <p className="dsh-hint">Le tableau de bord n’est pas encore activé : définissez la variable ADMIN_PASSWORD dans les réglages Vercel, puis redéployez.</p>
         )}
       </form>
     </main>

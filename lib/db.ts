@@ -53,8 +53,16 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS settings (key text PRIMARY KEY, value jsonb NOT NULL)`
 ];
 
+/** Adresse de la base : DATABASE_URL ou POSTGRES_URL, y compris avec un préfixe ajouté par Vercel (ex. STORAGE_DATABASE_URL). */
+export function databaseUrl() {
+  const env = process.env;
+  if (env.DATABASE_URL || env.POSTGRES_URL) return env.DATABASE_URL || env.POSTGRES_URL;
+  const key = Object.keys(env).find(k => /_(DATABASE_URL|POSTGRES_URL)$/.test(k) && env[k]);
+  return key ? env[key] : undefined;
+}
+
 async function connect(): Promise<Driver> {
-  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  const url = databaseUrl();
   let d: Driver;
   if (url) {
     const { neon } = await import("@neondatabase/serverless");

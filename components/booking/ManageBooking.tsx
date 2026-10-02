@@ -29,7 +29,7 @@ export default function ManageBooking({ token, appt, canCancel, cancelUntilHours
   return (
     <div className="bk-done">
       <p className={`bk-status is-${status}`}>{LABEL[status] || status}</p>
-      <h2 className="d d-m">{appt.serviceName}</h2>
+      <h2 className="bk-done-title">{appt.serviceName}</h2>
       <p className="lead bk-done-when">{fmtWhen(appt.start)}</p>
       <dl className="bk-recap">
         <div><dt>Au nom de</dt><dd>{appt.firstName}</dd></div>

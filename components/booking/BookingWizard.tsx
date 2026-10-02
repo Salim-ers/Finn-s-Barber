@@ -24,7 +24,7 @@ function scrollToEl(el: HTMLElement | null) {
   if (!el) return;
   const lenis = (window as unknown as { __lenis?: { scrollTo: (t: HTMLElement, o: object) => void } }).__lenis;
   if (lenis) lenis.scrollTo(el, { offset: -110, duration: 1.1 });
-  else el.scrollIntoView({ behavior: "smooth", block: "start" });
+  else window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 110, behavior: "smooth" });
 }
 
 export default function BookingWizard({ initialService }: { initialService?: string }) {
@@ -80,7 +80,7 @@ export default function BookingWizard({ initialService }: { initialService?: str
     return (
       <div className="bk-done" ref={topRef}>
         <p className="label tick">Rendez-vous confirmé</p>
-        <h2 className="d d-l">C’est réservé.</h2>
+        <h2 className="bk-done-title">C’est réservé.</h2>
         <p className="lead bk-done-when">{svc.name}, {fmtWhen(done.start)}.</p>
         <dl className="bk-recap">
           <div><dt>Durée</dt><dd>{svc.duration}</dd></div>

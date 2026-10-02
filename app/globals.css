@@ -601,7 +601,9 @@ html.motion:not(.no-loader) .loader{position:fixed;inset:0;z-index:9800;display:
 .bk-msg{font-size:14px;line-height:1.5;padding:12px 14px;border-left:2px solid #c0573f;background:rgba(192,87,63,.12)}
 .bk-msg button{font:inherit;text-decoration:underline}
 .bk-fine{font-size:12.5px;line-height:1.55;opacity:.7}
-.bk-done,.bk-off{max-width:760px;padding:clamp(28px,3vw,44px);border:1px solid rgba(183,165,138,.65);background:var(--warm);display:grid;gap:18px}
+.bk-done,.bk-off{max-width:760px;padding:clamp(28px,3vw,44px);border:1px solid rgba(183,165,138,.65);background:var(--warm);display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.bk-done>*,.bk-off>*{min-width:0}
+.bk-done-title{font-family:var(--serif);font-weight:700;font-variation-settings:"opsz" 144;text-transform:uppercase;letter-spacing:-.015em;line-height:.92;font-size:clamp(40px,5.2vw,84px);overflow-wrap:break-word}
 .bk-done .label{color:var(--champ)}
 .bk-done-when::first-letter{text-transform:uppercase}
 .bk-recap{border-top:1px solid var(--navy)}

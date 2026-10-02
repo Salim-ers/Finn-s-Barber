@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <div className="adm">{children}</div>;
+  return <div className="dsh">{children}</div>;
 }
