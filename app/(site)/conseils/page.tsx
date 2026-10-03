@@ -19,7 +19,7 @@ export default function Conseils() {
   const [f, ...rest] = conseils;
   return (
     <>
-      <PageHero label="Les conseils Finn’s" title="Conseils." sub="Coupe, barbe, entretien. Les conseils de la maison, sans détour." line="" />
+      <PageHero label="Les conseils Finn’s" title="Conseils." sub="Coupe, barbe, entretien : l’essentiel, sans détour." line="" />
       <section className="sec cream" style={{ paddingTop: 0 }}>
         <div className="wrap">
           <Link className="jf" href={`/conseils/${f.slug}`}>

@@ -7,7 +7,7 @@
 
 export type Tone = "navy" | "warm" | "cream";
 export type Media = { note: string; alt: string; tone: Tone; src?: string; video?: string; poster?: string; initial?: string; ratio?: string; pos?: string /* cadrage, ex. "50% 70%" */ };
-export type Service = { id: string; name: string; duration: string; minutes: number; price: string; priceCents: number; short: string; long: string; media: string };
+export type Service = { id: string; name: string; duration: string; minutes: number; price: string; priceCents: number; short: string; long: string; media: string; mediaPage: string };
 export type Review = { text: string; author: string; date: string };
 export type Reviews = { rating: string; count: number; source: string; checkedAt: string; criteria: [string, string][]; items: Review[] };
 export type GalleryItem = Media & { cat: "cuts" | "fades" | "beards" | "details"; size: "l" | "m" | "s"; ratio: string };
@@ -55,10 +55,10 @@ export const salon = {
 export const services: Service[] = [
   { id: "coupe", name: "Coupe", duration: "20 min", minutes: 20, price: "20 €", priceCents: 2000,
     short: "Une coupe homme précise, travaillée dans le détail et adaptée au style du client.",
-    long: "Coupe homme et finitions.", media: "s1" },
+    long: "Coupe homme et finitions.", media: "s1", mediaPage: "p1" },
   { id: "coupe-barbe", name: "Coupe + Barbe", duration: "25 min", minutes: 25, price: "25 €", priceCents: 2500,
     short: "Coupe homme, barbe et finitions pour un résultat propre et structuré.",
-    long: "Coupe, barbe et finitions.", media: "s2" }
+    long: "Coupe, barbe et finitions.", media: "s2", mediaPage: "p2" }
 ];
 
 /* Réservation en ligne (voir README, section « Réservation en ligne »).
@@ -120,24 +120,29 @@ export const reviews: Reviews = {
    ou video (ex. "/media/hero.mp4") + poster.
    Tant que src est vide, un emplacement de direction artistique s’affiche.
    Chaque photo n’est utilisée qu’une seule fois sur le site.
-   ⚠ PHOTOS D’ILLUSTRATION : seule salon.jpg montre le vrai salon. Toutes les autres viennent
+   ⚠ PHOTOS ET VIDÉO D’ILLUSTRATION : seule salon.jpg montre le vrai salon. Toutes les autres viennent
    d’Unsplash et de Pexels (licences libres, voir photoCredits) et servent à visualiser le rendu :
    les remplacer par des photos du salon avant la mise en ligne définitive, puis retirer les crédits correspondants. */
+/* Vidéo d’ouverture de l’accueil (Mixkit, licence libre) : paysage pour ordinateur et tablette, portrait pour mobile. */
+export const heroVideo = {
+  src: "/media/hero.mp4", srcPortrait: "/media/hero-portrait.mp4",
+  poster: "/media/hero-poster.jpg", posterPortrait: "/media/hero-poster-portrait.jpg",
+  alt: "Barbier au travail, ciseaux et peigne"
+};
+
 export const media: Record<string, Media> = {
-  hero:    { note: "Barber en plein dégradé, mains et tondeuse", alt: "Barber réalisant un dégradé à la tondeuse", tone: "navy", src: "/media/hero-degrade.jpg", video: "", poster: "" },
-  intro:   { note: "Le salon, lumière du jour", alt: "Intérieur du salon Finn’s Barber à Creil", tone: "warm", src: "/media/salon.jpg" },
-  intro2:  { note: "Détail : peigne et ciseaux", alt: "Peigne et ciseaux de barbier en main", tone: "cream", src: "/media/ciseaux.jpg" },
-  cut:     { note: "Finition au rasoir, plein cadre", alt: "Rasage au rasoir", tone: "navy", src: "/media/finition-rasoir.jpg", video: "" },
-  g1:      { note: "Ciseaux sur peigne", alt: "Coupe aux ciseaux sur peigne", tone: "warm", src: "/media/geste-couper.jpg" },
-  g2:      { note: "Tondeuse, transition du dégradé", alt: "Dégradé à la tondeuse", tone: "navy", src: "/media/geste-degrader.jpg" },
-  g3:      { note: "Structure au peigne, face au miroir", alt: "Mise en forme de la coupe au peigne", tone: "cream", src: "/media/geste-structurer.jpg" },
-  g4:      { note: "Contour net", alt: "Contours tracés à la tondeuse de finition", tone: "warm", src: "/media/geste-finaliser.jpg" },
+  since:   { note: "Le salon, lumière du jour", alt: "Intérieur du salon Finn’s Barber à Creil", tone: "warm", src: "/media/salon.jpg" },
+  cut:     { note: "Finition au rasoir, plein cadre", alt: "Rasage au rasoir", tone: "navy", src: "/media/finition-rasoir.jpg" },
   s1:      { note: "Coupe, vue de profil", alt: "Coupe homme dégradée, vue de profil", tone: "navy", src: "/media/prestation-coupe.jpg" },
   s2:      { note: "Coupe + barbe, finitions", alt: "Taille de barbe aux ciseaux", tone: "warm", src: "/media/prestation-coupe-barbe.jpg" },
+  p1:      { note: "Dégradé à la tondeuse", alt: "Barber réalisant un dégradé à la tondeuse", tone: "navy", src: "/media/hero-degrade.jpg" },
+  p2:      { note: "Contours et barbe", alt: "Contours tracés à la tondeuse de finition", tone: "warm", src: "/media/geste-finaliser.jpg" },
+  w1:      { note: "Ciseaux sur peigne", alt: "Coupe aux ciseaux sur peigne", tone: "warm", src: "/media/geste-couper.jpg" },
+  w2:      { note: "Transition du dégradé", alt: "Dégradé à la tondeuse", tone: "navy", src: "/media/geste-degrader.jpg" },
+  w3:      { note: "Structure au peigne", alt: "Mise en forme de la coupe au peigne", tone: "cream", src: "/media/geste-structurer.jpg" },
+  w4:      { note: "Coupe en cours", alt: "Coupe à la tondeuse dans un salon de barbier", tone: "warm", src: "/media/coupe-en-cours.jpg", pos: "50% 70%" },
   story:   { note: "Le geste, au quotidien", alt: "Barbier au travail dans un salon", tone: "warm", src: "/media/histoire-geste.jpg" },
-  archive: { note: "Archive familiale, si disponible", alt: "Fauteuil de barbier ancien dans la lumière", tone: "cream", src: "/media/heritage-fauteuil.jpg" },
-  facade:  { note: "La façade, 43 rue Jean Jaurès", alt: "Fauteuils de barbier derrière une vitrine", tone: "navy", src: "/media/vitrine.jpg" },
-  logo:    { note: "Coupe en cours, cadrage serré", alt: "Coupe à la tondeuse dans un salon de barbier", tone: "warm", src: "/media/coupe-en-cours.jpg", pos: "50% 72%" }
+  archive: { note: "Archive familiale, si disponible", alt: "Fauteuil de barbier ancien dans la lumière", tone: "cream", src: "/media/heritage-fauteuil.jpg" }
 };
 
 export const gallery: GalleryItem[] = ([
@@ -156,10 +161,10 @@ export const CAT: Record<string, string> = { all: "Tout", cuts: "Coupes", fades:
 
 /* Crédits photo (affichés dans les mentions légales). Retirer un photographe dès que sa photo est remplacée. */
 export const photoCredits = {
-  salon: "Photographie du salon : Finn’s Barber.",
+  salon: "Photographie du salon : Finn’s Barber. Vidéo d’ouverture : Mixkit (licence Mixkit).",
   stock: [
     { source: "Unsplash", license: "https://unsplash.com/license", authors: [
-      "Damian Barczak", "Eduardo Cano Photo Co.", "Gulom Nazarov", "Hannah Skelly", "Jerry Wei", "Josh Marty", "Joshua Lawrence",
+      "Damian Barczak", "Eduardo Cano Photo Co.", "Gulom Nazarov", "Hannah Skelly", "Josh Marty", "Joshua Lawrence",
       "Mr Shave", "Nate Johnston", "Peter Vimalis", "Reza Ghaemi", "Salah Regouane", "Tá Focando", "Ten", "YearOne"
     ] },
     { source: "Pexels", license: "https://www.pexels.com/license/", authors: [
@@ -170,16 +175,9 @@ export const photoCredits = {
 };
 
 export const timeline = [
-  { year: "1960s", title: "Les origines", text: "Premières racines du savoir-faire familial." },
-  { year: "1999",  title: "Finn’s",       text: "Ouverture du salon à Creil." },
-  { year: "Today", title: "The next cut", text: "Une nouvelle génération perpétue et modernise l’expérience." }
-];
-
-export const steps = [
-  { t: "Couper",     d: "Le volume se décide aux ciseaux, mèche après mèche, selon la nature du cheveu.", m: "g1" },
-  { t: "Dégrader",   d: "La tondeuse travaille les transitions jusqu’à ce que le passage devienne invisible.", m: "g2" },
-  { t: "Structurer", d: "Les lignes se dessinent : la forme suit le visage, pas la tendance.", m: "g3" },
-  { t: "Finaliser",  d: "Contours nets, barbe taillée, coiffage. Le détail qui signe la coupe.", m: "g4" }
+  { year: "1960s", title: "Les débuts", text: "Khaldi Djilali débute dans la coiffure homme." },
+  { year: "1999",  title: "Finn’s",     text: "Ouverture du salon, rue Jean Jaurès à Creil." },
+  { year: "Today", title: "La relève",  text: "La nouvelle génération perpétue le geste." }
 ];
 
 /* Conseils — structure CMS-friendly. Articles rédigés comme brouillons, dates à valider. */

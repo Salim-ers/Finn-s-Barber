@@ -13,7 +13,7 @@ export default async function Reserver({ searchParams }: { searchParams: Promise
   const { service } = await searchParams;
   return (
     <>
-      <PageHero label="Réservation / En ligne" title={"Votre\ncréneau."} sub="Choisissez votre prestation, votre jour et votre heure. Confirmation immédiate, règlement au salon." line="" />
+      <PageHero label="Réservation" title="Réserver." sub="Confirmation immédiate · règlement au salon." line="" />
       <section className="sec cream bk-wrap" style={{ paddingTop: 0 }}>
         <div className="wrap"><BookingWizard initialService={service} /></div>
       </section>

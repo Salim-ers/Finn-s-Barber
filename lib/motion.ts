@@ -2,7 +2,7 @@
 
 /* =========================================================
    MOTION FINN’S — GSAP + ScrollTrigger + Lenis
-   Révélations, hero, séquence logo, sticky, curseur, transitions.
+   Ouverture de l’accueil, révélations, parallaxes, curseur, transitions.
    Les états initiaux masqués sont posés en CSS (html.motion) pour éviter tout flash.
    ========================================================= */
 import gsap from "gsap";
@@ -66,40 +66,57 @@ export function initReveals(scope: ParentNode) {
   });
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero : ouverture ----------
+   Première visite de la session : « FINN’S » s’écrit sur fond ivoire, la vidéo apparaît à travers
+   les lettres (mélange « screen »), puis on plonge dans le I jusqu’à ce que la vidéo remplisse l’écran.
+   Ensuite, et à chaque retour sur l’accueil : la vidéo se pose, le titre et les boutons arrivent. */
 export function heroIntro() {
   const hero = $("#hero"); if (!hero) return;
+  const root = document.documentElement;
+  const intro = $(".hx-intro", hero);
+  const letters = $$(".hx-ch", hero), reveal = $$(".hx-reveal", hero), zoom = $(".hx-zoom", hero);
   if (!isMotion()) { $$(".fline", hero).forEach(f => f.classList.add("on")); return; }
-  gsap.set($$(".hw .ln-i", hero), { y: 0, yPercent: 110 });
-  gsap.set($$(".hi-fade", hero), { autoAlpha: 0, y: 14 });
-  gsap.timeline()
-    .to($$(".hw-1 .ln-i", hero), { yPercent: 0, duration: 1.15, ease: "power4.out" }, 0)
-    .to($$(".hw-2 .ln-i", hero), { yPercent: 0, duration: 1.15, ease: "power4.out" }, 0.14)
-    .add(() => $$(".fline", hero).forEach(f => f.classList.add("on")), 0.4)
-    .fromTo($(".hero-img", hero), { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.25, ease: "power3.inOut" }, 0.3)
-    .fromTo($(".hero-img .fig-in", hero), { scale: 1.3 }, { scale: 1, duration: 1.6, ease: "power3.out" }, 0.3)
-    .to($$(".hi-fade", hero), { autoAlpha: 1, y: 0, duration: 0.8, ease: "power2.out", stagger: 0.07 }, 0.75)
-    .fromTo($(".hs-in", hero), { autoAlpha: 0 }, { autoAlpha: 0.7, duration: 0.8 }, 1.3);
+
+  gsap.set(letters, { y: 0, yPercent: 115 });
+  gsap.set(reveal, { autoAlpha: 0, y: 22 });
+  const tl = gsap.timeline();
+  let at = 0.1;
+
+  if (intro && !root.classList.contains("no-loader") && getComputedStyle(intro).display !== "none") {
+    try { sessionStorage.setItem("finns-loader", "1"); } catch { /* stockage indisponible */ }
+    lenis?.stop();
+    const word = $(".hx-intro-word", intro)!, chars = $$(".hx-ich", intro), stem = $(".hx-ich-i", intro);
+    gsap.set(chars, { y: 0, yPercent: 120 });
+    // Point de plongée : le centre du I (un trait plein, donc la vidéo remplit l’écran)
+    const origin = () => {
+      const w = word.getBoundingClientRect(), r = (stem || word).getBoundingClientRect();
+      return `${r.left - w.left + r.width / 2}px ${r.top - w.top + r.height * 0.55}px`;
+    };
+    tl.to(chars, { yPercent: 0, duration: 0.95, ease: "power4.out", stagger: 0.07 }, 0.15)
+      .add(() => $(".fline", intro)?.classList.add("on"), 0.7)
+      .to($(".hx-intro-line", intro), { autoAlpha: 0, duration: 0.3 }, 1.75)
+      .set(word, { transformOrigin: origin }, 1.8)
+      .to(word, { scale: 90, duration: 1.35, ease: "power3.in" }, 1.8)
+      .to(intro, { autoAlpha: 0, duration: 0.3 }, 2.95)
+      .add(() => {
+        root.classList.add("no-loader"); intro.style.display = "none"; lenis?.start();
+        gsap.fromTo([$(".nav"), $(".mbar")].filter(Boolean), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6, clearProps: "opacity,visibility" });
+      }, 3.25);
+    at = 2.85;
+  }
+
+  if (zoom) tl.fromTo(zoom, { scale: 1.16 }, { scale: 1, duration: 2.4, ease: "power3.out" }, at - 0.1);
+  tl.to(letters, { yPercent: 0, duration: 1.1, ease: "power4.out", stagger: 0.04 }, at + 0.1)
+    .add(() => $$(".hx-in .fline", hero).forEach(f => f.classList.add("on")), at + 0.5)
+    .to(reveal, { autoAlpha: 1, y: 0, duration: 0.9, ease: "power2.out", stagger: 0.08 }, at + 0.55);
 }
 
-function initHeroScroll() {
+/* Hero au défilement : la vidéo s’enfonce, le contenu remonte et s’efface (sans épinglage). */
+function initHeroParallax() {
   const hero = $("#hero"); if (!hero || !isMotion()) return;
-  const img = $(".hero-img", hero)!;
-  const calc = () => {
-    const W = hero.clientWidth, H = hero.clientHeight;
-    let x = img.offsetLeft, y = img.offsetTop, p = img.offsetParent as HTMLElement | null;
-    while (p && p !== hero) { x += p.offsetLeft; y += p.offsetTop; p = p.offsetParent as HTMLElement | null; }
-    const w = img.offsetWidth, h = img.offsetHeight;
-    return { x: W / 2 - (x + w / 2), y: H / 2 - (y + h / 2), s: Math.max(W / w, H / h) * 1.02 };
-  };
-  let c = calc();
-  gsap.timeline({ scrollTrigger: { trigger: hero, start: "top top", end: () => "+=" + Math.round(innerHeight * (innerWidth < 760 ? 0.7 : 1)), pin: true, scrub: true, invalidateOnRefresh: true, onRefreshInit: () => { c = calc(); } } })
-    .to($(".hw-1", hero), { xPercent: -16, ease: "none", duration: 1 }, 0)
-    .to($(".hw-2", hero), { xPercent: 16, ease: "none", duration: 1 }, 0)
-    .to([$(".hero-meta", hero), $(".hero-line", hero), $(".hero-foot", hero), $(".hero-scroll", hero)], { autoAlpha: 0, y: -24, duration: 0.35, ease: "none" }, 0)
-    .to($$(".ph-meta, .ph-flag", img), { autoAlpha: 0, duration: 0.2 }, 0)
-    .to(img, { x: () => c.x, y: () => c.y, scale: () => c.s, ease: "power1.in", duration: 1 }, 0)
-    .to([$(".hw-1", hero), $(".hw-2", hero)], { autoAlpha: 0, duration: 0.3 }, 0.6);
+  const st = { trigger: hero, start: "top top", end: "bottom top", scrub: true };
+  gsap.to($(".hx-media", hero), { yPercent: 22, ease: "none", scrollTrigger: st });
+  gsap.to($(".hx-in", hero), { yPercent: -14, autoAlpha: 0, ease: "none", scrollTrigger: { ...st, end: "70% top" } });
 }
 
 /* ---------- Timeline ---------- */
@@ -113,71 +130,13 @@ function initTimeline(scope: ParentNode) {
   });
 }
 
-/* ---------- The cut ---------- */
+/* ---------- The cut : photo en profondeur, mots qui montent (sans épinglage) ---------- */
 function initCut() {
   const s = $("#cut"); if (!s || !isMotion()) return;
   const words = $$(".cut-words .ln-i", s), inner = $(".cut-bg .fig-in", s);
-  gsap.set(words, { y: 0, yPercent: 110 }); gsap.set(inner, { scale: 1.18 });
-  const tl = gsap.timeline({ scrollTrigger: { trigger: s, start: "top top", end: () => "+=" + Math.round(innerHeight * (innerWidth < 760 ? 0.8 : 1.2)), pin: true, scrub: true } });
-  tl.to(inner, { scale: 1.02, yPercent: 4, ease: "none", duration: 3 }, 0);
-  words.forEach((w, i) => tl.to(w, { yPercent: 0, duration: 0.6, ease: "power2.out" }, 0.4 + i * 0.8));
-}
-
-/* ---------- Le geste (sticky) ---------- */
-function initGeste(): IntersectionObserver | null {
-  const g = $("#geste"); if (!g) return null;
-  const st = $$(".gs", g), figs = $$(".gm-f", g);
-  const set = (i: number) => { st.forEach((s, j) => s.classList.toggle("on", j === i)); figs.forEach((f, j) => f.classList.toggle("on", j <= i)); };
-  set(0);
-  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) set(+((e.target as HTMLElement).dataset.i || 0)); }), { rootMargin: "-48% 0px -48% 0px" });
-  st.forEach(s => io.observe(s));
-  return io;
-}
-
-/* ---------- Galerie défilante ---------- */
-function initMarquee(loops: gsap.core.Tween[]) {
-  if (!isMotion() || innerWidth < 760) return;
-  $$(".marq").forEach(m => {
-    const t = $(".marq-track", m), dir = +(m.dataset.dir || -1);
-    const tw = dir < 0 ? gsap.to(t, { xPercent: -50, duration: 90, ease: "none", repeat: -1 }) : gsap.fromTo(t, { xPercent: -50 }, { xPercent: 0, duration: 90, ease: "none", repeat: -1 });
-    loops.push(tw);
-    m.addEventListener("mouseenter", () => gsap.to(tw, { timeScale: 0.2, duration: 0.8 }));
-    m.addEventListener("mouseleave", () => gsap.to(tw, { timeScale: 1, duration: 0.8 }));
-    ScrollTrigger.create({ trigger: m, start: "top bottom", end: "bottom top", onToggle: s => { if (s.isActive) tw.play(); else tw.pause(); } });
-  });
-}
-
-/* ---------- Séquence logo : FINN’S → photo → BARBER → SINCE 1999 → navy ---------- */
-function initLogoSeq() {
-  const s = $("#logoseq"); if (!s || !isMotion()) return;
-  const letters = $$(".ls-l", s), barber = $$(".ls-barber .ln-i", s), photo = $(".ls-photo", s);
-  const segs = $$(".ls-line .fl-s", s), txt = $(".ls-line .fl-t", s), navyP = $(".ls-navy", s);
-  const mob = () => innerWidth < 760;
-  gsap.set(barber, { y: 0, yPercent: 110 }); gsap.set(photo, { clipPath: "inset(50% 50% 50% 50%)" });
-  gsap.set(segs, { scaleX: 0 }); gsap.set(txt, { autoAlpha: 0 }); gsap.set(navyP, { yPercent: 100 });
-  gsap.timeline({ defaults: { ease: "none" }, scrollTrigger: { trigger: s, start: "top top", end: () => "+=" + Math.round(innerHeight * (mob() ? 1.5 : 2.2)), pin: true, scrub: true, invalidateOnRefresh: true } })
-    .to(letters, { x: i => (i - 2.5) * innerWidth * (mob() ? 0.012 : 0.017), duration: 1, ease: "power1.inOut" }, 0)
-    .to(photo, { clipPath: () => mob() ? "inset(22% 12% 22% 12%)" : "inset(14% 28% 14% 28%)", duration: 1.2, ease: "power2.inOut" }, 0.5)
-    .to(barber, { yPercent: 0, duration: 0.8, ease: "power2.out" }, 1.3)
-    .to(segs, { scaleX: 1, duration: 0.8 }, 2)
-    .to(txt, { autoAlpha: 1, duration: 0.4 }, 2.25)
-    .to(navyP, { yPercent: 0, duration: 1, ease: "power2.inOut" }, 3.2);
-}
-
-/* ---------- Aperçu prestation ---------- */
-function initSvcPreview() {
-  const pv = $("#svcprev");
-  if (!pv || !isFine() || !isMotion() || innerWidth < 900) return;
-  const xTo = gsap.quickTo(pv, "x", { duration: 0.6, ease: "power3" }), yTo = gsap.quickTo(pv, "y", { duration: 0.6, ease: "power3" });
-  $$("[data-prev]").forEach(a => {
-    a.addEventListener("pointerenter", (e: PointerEvent) => {
-      $$(".sp-f", pv).forEach(f => f.classList.toggle("on", f.dataset.i === a.dataset.prev));
-      gsap.set(pv, { x: e.clientX + 30, y: e.clientY - 140 });
-      gsap.to(pv, { autoAlpha: 1, scale: 1, duration: 0.45, ease: "power3.out", overwrite: "auto" });
-    });
-    a.addEventListener("pointermove", (e: PointerEvent) => { xTo(e.clientX + 30); yTo(e.clientY - 140); });
-    a.addEventListener("pointerleave", () => gsap.to(pv, { autoAlpha: 0, scale: 0.94, duration: 0.35, overwrite: "auto" }));
-  });
+  if (inner) gsap.fromTo(inner, { scale: 1.22, yPercent: -7 }, { scale: 1.04, yPercent: 7, ease: "none", scrollTrigger: { trigger: s, start: "top bottom", end: "bottom top", scrub: true } });
+  gsap.set(words, { y: 0, yPercent: 110 });
+  ScrollTrigger.create({ trigger: s, start: "top 55%", once: true, onEnter: () => gsap.to(words, { yPercent: 0, duration: 1.05, ease: "power4.out", stagger: 0.16 }) });
 }
 
 /* ---------- Boutons magnétiques ---------- */
@@ -214,11 +173,13 @@ export function runLoader(done: () => void) {
   const loader = $("#loader");
   const root = document.documentElement;
   if (!loader || root.classList.contains("no-loader") || !isMotion()) { if (loader) loader.style.display = "none"; done(); return; }
+  // Accueil : l’ouverture du hero remplace le loader
+  if ($("#hero .hx-intro")) { loader.style.display = "none"; done(); return; }
   try { sessionStorage.setItem("finns-loader", "1"); } catch { /* stockage indisponible */ }
   lenis?.stop();
   const ldIn = $(".ld-in", loader)!, lns = $$(".ln-i", ldIn);
   gsap.set(lns, { y: 0, yPercent: 110 }); gsap.set(ldIn, { opacity: 1 });
-  gsap.timeline({ onComplete: () => { loader.style.display = "none"; lenis?.start(); } }) // masqué, pas retiré : l’élément appartient à React
+  gsap.timeline({ onComplete: () => { loader.style.display = "none"; root.classList.add("no-loader"); lenis?.start(); } }) // masqué, pas retiré : l’élément appartient à React
     .to(lns[0], { yPercent: 0, duration: 0.5, ease: "power3.out" }, 0.05)
     .to(lns[1], { yPercent: 0, duration: 0.5, ease: "power3.out" }, 0.18)
     .add(() => $(".fline", ldIn)?.classList.add("on"), 0.3)
@@ -247,24 +208,14 @@ export function curtainOut() {
 /* ---------- Initialisation d’une page ; renvoie le nettoyage ---------- */
 export function initPage(): () => void {
   const main = $("#main")!, footer = $("#footer")!;
-  const loops: gsap.core.Tween[] = [];
-  // Ordre du DOM : épingles d’abord, révélations ensuite (calculs ScrollTrigger corrects)
-  initHeroScroll();
+  initHeroParallax();
   initTimeline(main);
   initCut();
-  const io = initGeste();
-  initMarquee(loops);
-  initLogoSeq();
-  initSvcPreview();
   initReveals(main);
   initReveals(footer);
   initMagnetic(document);
   ScrollTrigger.refresh();
-  return () => {
-    ScrollTrigger.getAll().forEach(t => t.kill());
-    loops.forEach(t => t.kill());
-    io?.disconnect();
-  };
+  return () => { ScrollTrigger.getAll().forEach(t => t.kill()); };
 }
 
 export const refresh = () => ScrollTrigger.refresh();

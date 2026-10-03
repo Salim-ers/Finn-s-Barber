@@ -1,8 +1,6 @@
-import Link from "next/link";
-import { telHref } from "@/lib/site";
-import { Arr, FLine } from "@/components/ui";
+import { FLine } from "@/components/ui";
 
-/* Loader (premier chargement uniquement), rideau de transition, curseur, barre mobile */
+/* Loader (premier chargement uniquement), rideau de transition, curseur */
 export function Loader() {
   return (
     <div className="loader" id="loader" aria-hidden="true">
@@ -26,13 +24,4 @@ export function Curtain() {
 
 export function Cursor() {
   return <div className="cursor" id="cursor" aria-hidden="true"><span /></div>;
-}
-
-export function MobileBar() {
-  return (
-    <div className="mbar">
-      {telHref ? <a className="mbar-call" href={telHref}>Appeler</a> : <Link className="mbar-call" href="/contact">Appeler</Link>}
-      <Link className="mbar-book" href="/reserver">Prendre RDV <Arr /></Link>
-    </div>
-  );
 }

@@ -2,7 +2,8 @@ import { salon, services } from "@/lib/data";
 import { A, DAYS, hoursOf, parseH } from "@/lib/site";
 import Nav from "@/components/chrome/Nav";
 import Footer from "@/components/chrome/Footer";
-import { Curtain, Cursor, Loader, MobileBar } from "@/components/chrome/Overlays";
+import { Curtain, Cursor, Loader } from "@/components/chrome/Overlays";
+import MobileBar from "@/components/chrome/MobileBar";
 import MotionRoot from "@/components/motion/MotionRoot";
 
 function jsonLd() {

@@ -12,7 +12,7 @@ export const metadata: Metadata = pageMeta(
 export default function Galerie() {
   return (
     <>
-      <PageHero label="Selected work / Galerie" title={"Cuts /\nDetails /\nFinn’s."} line="" />
+      <PageHero label="Galerie" title={"Cuts /\nDetails /\nFinn’s."} line="" />
       <section className="sec cream" style={{ paddingTop: 0 }}><div className="wrap"><GalleryGrid /></div></section>
       <CtaBlock />
     </>

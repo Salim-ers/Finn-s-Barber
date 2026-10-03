@@ -85,7 +85,9 @@ Tout est centralisé dans **`lib/data.ts`** : coordonnées, horaires, tarifs, pr
    ```
 Tant qu’un `src` est vide, un emplacement « Photo à fournir » s’affiche. Next.js convertit les images en AVIF/WebP.
 
-**Photos actuelles :** seule `salon.jpg` montre le vrai salon. Les autres sont des photos d’illustration Unsplash et Pexels (licences libres, usage commercial autorisé), choisies sans tatouage visible et sans doublon : chaque photo n’apparaît qu’une fois. À remplacer par des photos du salon, en retirant au fur et à mesure les photographes de `photoCredits`.
+**Photos actuelles :** seule `salon.jpg` montre le vrai salon. Les autres sont des photos d’illustration Unsplash et Pexels (licences libres, usage commercial autorisé), sans tatouage visible et sans doublon : chaque photo n’apparaît qu’une fois. À remplacer par des photos du salon, en retirant au fur et à mesure les photographes de `photoCredits`.
+
+**Vidéo d’ouverture :** `hero.mp4` (ordinateur et tablette) et `hero-portrait.mp4` (mobile), avec leurs images fixes `hero-poster*.jpg`, déclarées dans `heroVideo` (`lib/data.ts`). Vidéos Mixkit (licence libre). Pour la remplacer par une vidéo du salon : boucle de 8 à 12 s, sans son, moins de 3 Mo, en gardant les mêmes noms de fichiers. La séquence d’ouverture (lettres « FINN’S » puis plongée dans la vidéo) ne se joue qu’à la première visite de la session ; elle est désactivée si le visiteur a demandé à réduire les animations.
 
 ### Avis clients
 `reviews` dans `lib/data.ts` : avis avec commentaire relevés sur la fiche Planity du salon (textes d’origine, prénom et initiale), note globale, nombre d’avis et date de relevé. Ils s’affichent sur l’accueil et sur `/avis`. À mettre à jour régulièrement, uniquement avec de vrais avis.

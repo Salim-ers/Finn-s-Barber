@@ -15,6 +15,7 @@ export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const burger = useRef<HTMLButtonElement>(null);
   const top = "/" + (pathname.split("/")[1] || "");
+  const light = pathname === "/" && !scrolled && !open; // menu clair au-dessus de la vidéo d’accueil
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -35,7 +36,7 @@ export default function Nav() {
 
   return (
     <>
-      <header className={`nav ${scrolled ? "is-scrolled" : ""} ${open ? "menu-open" : ""}`}>
+      <header className={`nav ${scrolled ? "is-scrolled" : ""} ${open ? "menu-open" : ""} ${light ? "nav--light" : ""}`}>
         <Link className="nav-logo" href="/" aria-label="Finn’s Barber, accueil">
           <span className="nav-wm">Finn’s</span><span className="nav-sub">Barber · Creil</span>
         </Link>

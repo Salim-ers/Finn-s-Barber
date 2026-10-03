@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { services, timeline, media, reviews, type Media, type Review } from "@/lib/data";
-import { A, pad2 } from "@/lib/site";
+import { timeline, reviews, type Media, type Review } from "@/lib/data";
+import { A, groupHours, pad2 } from "@/lib/site";
 
 /* Titre découpé en lignes masquées (reveal vertical) */
 export function Lines({ text }: { text: string }) {
@@ -88,7 +88,7 @@ export function CtaBlock() {
         <h2 className="d d-xxl split cta-title"><Lines text="À vous." /></h2>
         <div className="cta-row">
           <BookButton className="btn--solid-cream btn--lg" />
-          <p className="cta-addr label fade">{A.street}<br />{A.postalCode} {A.city}</p>
+          <p className="cta-addr label fade">{A.street}, {A.postalCode} {A.city}<br />{groupHours().filter(h => h.v !== "Fermé").map(h => `${h.days} · ${h.v}`).join(" / ")}</p>
         </div>
       </div>
     </section>
@@ -113,34 +113,6 @@ export function Timeline() {
   );
 }
 
-export function ServiceRows() {
-  return (
-    <ul className="svc-list">
-      {services.map((s, i) => (
-        <li className="svc-row" key={s.id}>
-          <Link href={`/reserver?service=${s.id}`} data-cursor="book" data-prev={i} aria-label={`Réserver : ${s.name}, ${s.duration}, ${s.price}`}>
-            <span className="svc-n">{pad2(i + 1)}</span>
-            <span className="svc-name">{s.name}</span>
-            <span className="svc-desc">{s.short}</span>
-            <span className="svc-dur">{s.duration.toUpperCase()}</span>
-            <span className="svc-price">{s.price}</span>
-            <span className="svc-cta">Réserver <Arr /></span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/* Aperçu photo qui suit le curseur au survol d’une prestation (desktop) */
-export function ServicePreview() {
-  return (
-    <div className="svc-prev" id="svcprev" aria-hidden="true">
-      {services.map((s, i) => <div className="sp-f" data-i={i} key={s.id}><Fig m={media[s.media]} className="fig--sm" /></div>)}
-    </div>
-  );
-}
-
 /* Note globale et critères, relevés sur la fiche Planity du salon */
 export function RatingSummary() {
   return (
@@ -160,26 +132,5 @@ export function ReviewCard({ r }: { r: Review }) {
       <blockquote><p>{r.text}</p></blockquote>
       <figcaption className="label">{r.author} <span aria-hidden="true">·</span> {r.date}</figcaption>
     </figure>
-  );
-}
-
-export function ReviewsSection() {
-  const [featured, ...rest] = reviews.items;
-  const picks = rest.filter(r => r.text.length > 45 && r.text.length < 230).slice(0, 4);
-  return (
-    <section className="sec warm">
-      <div className="wrap rv-grid">
-        <div>
-          <p className="label tick fade">Clients / Finn’s</p>
-          <RatingSummary />
-        </div>
-        <div>
-          <h2 className="d d-m split"><Lines text={"Les clients\nparlent\npour nous."} /></h2>
-          <blockquote className="rv-quote fade"><p>“{featured.text}”</p><footer className="label">{featured.author}, {featured.date}</footer></blockquote>
-          <div className="rv-cards fade">{picks.map(r => <ReviewCard r={r} key={r.text} />)}</div>
-          <Link className="link-more" href="/avis"><span className="ul">Lire les {reviews.items.length} avis</span> <Arr /></Link>
-        </div>
-      </div>
-    </section>
   );
 }

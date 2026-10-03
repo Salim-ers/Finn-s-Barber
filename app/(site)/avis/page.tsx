@@ -12,7 +12,7 @@ export const metadata: Metadata = pageMeta(
 export default function Avis() {
   return (
     <>
-      <PageHero label="Clients / Avis" title={"Ils en\nparlent."} sub="Les avis laissés par nos clients après leur rendez-vous, recopiés tels quels." line="" />
+      <PageHero label="Clients / Avis" title={"Ils en\nparlent."} sub="Recopiés tels quels, après leur rendez-vous." line="" />
       <section className="sec cream" style={{ paddingTop: 0 }}>
         <div className="wrap rv-page">
           <aside className="rv-side"><RatingSummary /></aside>

@@ -25,7 +25,7 @@ function Row({ k, v, href }: { k: string; v: ReactNode; href?: string }) {
 export default function Contact() {
   return (
     <>
-      <PageHero label="Contact / Creil" title={"Find\nFinn’s."} line="" />
+      <PageHero label="Contact" title={"Find\nFinn’s."} line="" />
       <section className="sec cream" style={{ paddingTop: 0 }}>
         <div className="wrap ct-grid">
           <div>
@@ -52,9 +52,9 @@ export default function Contact() {
           <div>
             <p className="label tick">Nous joindre</p>
             <dl className="cts">
-              <Row k="Téléphone" v={salon.phone} href={telHref} />
-              <Row k="E-mail" v={salon.email} href={salon.email ? `mailto:${salon.email}` : ""} />
-              <Row k="Instagram" v={salon.instagram ? salon.instagramHandle : ""} href={salon.instagram} />
+              {salon.phone && <Row k="Téléphone" v={salon.phone} href={telHref} />}
+              {salon.email && <Row k="E-mail" v={salon.email} href={`mailto:${salon.email}`} />}
+              {salon.instagram && <Row k="Instagram" v={salon.instagramHandle} href={salon.instagram} />}
               <Row k="Rendez-vous" v="Réserver en ligne" href="/reserver" />
             </dl>
           </div>

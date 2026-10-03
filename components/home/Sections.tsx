@@ -1,103 +1,97 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
-import { gallery, media, salon, steps, type GalleryItem } from "@/lib/data";
-import { A, pad2 } from "@/lib/site";
-import { Arr, BookButton, FLine, Fig, Lines, ServiceRows, Timeline } from "@/components/ui";
+import { conseils, media, reviews, services } from "@/lib/data";
+import { Arr, BookButton, FLine, Fig, Lines, ReviewCard } from "@/components/ui";
+import HeroVideo from "./HeroVideo";
 
-/* Sections épinglées au défilement : GSAP les déplace dans un conteneur « pin-spacer ».
-   Cette enveloppe reste à sa place dans la page, React peut donc la retirer au changement de page sans erreur. */
-const Pinned = ({ children }: { children: ReactNode }) => <div className="pinned">{children}</div>;
+const chars = (w: string, cls: string) => [...w].map((c, i) => <span className="hx-chw" key={i}><span className={cls}>{c}</span></span>);
 
+/* ---------- Ouverture : vidéo plein écran ---------- */
 export function Hero() {
   return (
-    <Pinned><section className="hero" id="hero">
-      <h1 className="sr">Finn’s Barber, coiffeur homme et barbier à Creil depuis 1999</h1>
-      <div className="hero-meta label">
-        <span className="hi-fade">Creil, France</span>
-        <span className="hi-fade hero-addr">Coiffeur homme &amp; barber</span>
-        <span className="hi-fade">{A.street}</span>
+    <section className="hx" id="hero">
+      <div className="hx-media">
+        <div className="hx-zoom"><HeroVideo /></div>
+        <div className="hx-veil" />
       </div>
-      <div className="hero-stage">
-        <div className="hw hw-1 wm" aria-hidden="true"><span className="ln"><span className="ln-i">Finn’s</span></span></div>
-        <div className="hero-img"><Fig m={media.hero} eager sizes="100vw" /></div>
-        <div className="hw hw-2 wm" aria-hidden="true"><span className="ln"><span className="ln-i">Barber</span></span></div>
-      </div>
-      <div className="hero-line"><FLine className="fline--manual" /></div>
-      <div className="hero-foot">
-        <p className="hero-sign hi-fade">Une coupe.<br />Une signature.</p>
-        <div className="hero-ctas hi-fade">
-          <BookButton />
-          <button className="btn btn--ghost" type="button" data-scrollto="#intro">Découvrir Finn’s</button>
+
+      {/* Première visite : « FINN’S » laisse voir la vidéo à travers ses lettres, puis on plonge dans le I */}
+      <div className="hx-intro" aria-hidden="true">
+        <div className="hx-intro-word">
+          {[..."FINN’S"].map((c, i) => <span className="hx-ichw" key={i}><span className={`hx-ich ${c === "I" ? "hx-ich-i" : ""}`}>{c}</span></span>)}
         </div>
+        <div className="hx-intro-line"><FLine className="fline--manual" /></div>
       </div>
-      <div className="hero-scroll" aria-hidden="true"><span className="hs-in label">Scroll to discover<i /></span></div>
-    </section></Pinned>
+
+      <div className="hx-in wrap">
+        <p className="hx-kicker label hx-reveal">Barbier · Creil · depuis 1999</p>
+        <h1 className="hx-title">
+          <span className="sr">Finn’s Barber, coiffeur homme et barbier à Creil</span>
+          <span className="hx-row" aria-hidden="true">{chars("Finn’s", "hx-ch")}</span>
+          <span className="hx-row" aria-hidden="true">{chars("Barber", "hx-ch")}</span>
+        </h1>
+        <div className="hx-line hx-reveal"><FLine className="fline--manual" /></div>
+        <div className="hx-ctas hx-reveal">
+          <BookButton className="btn--solid-cream btn--lg" />
+          <button className="btn btn--ghost btn--lg" type="button" data-scrollto="#offre">Tarifs</button>
+        </div>
+        <Link className="hx-proof hx-reveal" href="/avis"><span aria-hidden="true">★★★★★</span> {reviews.rating} · {reviews.count} avis clients</Link>
+      </div>
+      <div className="hx-scroll hx-reveal" aria-hidden="true"><i /></div>
+    </section>
   );
 }
 
-export function Intro() {
+/* ---------- Prestations ---------- */
+export function Offer() {
   return (
-    <section className="sec navy" id="intro">
+    <section className="sec cream offer" id="offre">
       <div className="wrap">
-        <div className="intro-grid">
+        <div className="sec-head">
+          <p className="label tick fade">Prestations</p>
+          <h2 className="d d-l split"><Lines text={"Simple.\nPrécis."} /></h2>
+        </div>
+        <div className="offer-grid">
+          {services.map(s => (
+            <Link key={s.id} className="offer-card" href={`/reserver?service=${s.id}`} data-cursor="book" aria-label={`Réserver : ${s.name}, ${s.duration}, ${s.price}`}>
+              <div className="offer-img mask"><Fig m={media[s.media]} fill sizes="(max-width: 760px) 100vw, 45vw" /></div>
+              <div className="offer-body">
+                <h3 className="offer-name">{s.name}</h3>
+                <p className="offer-meta"><span>{s.duration}</span><strong>{s.price}</strong></p>
+                <span className="offer-cta">Réserver <Arr /></span>
+              </div>
+            </Link>
+          ))}
+        </div>
+        <p className="offer-note fade">Réservation en ligne 24h/24 · confirmation immédiate · règlement au salon</p>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Avis ---------- */
+export function Proof() {
+  const picks = reviews.items.filter(r => r.text.length > 40 && r.text.length < 170).slice(0, 3);
+  return (
+    <section className="sec warm proof">
+      <div className="wrap">
+        <div className="proof-head">
+          <p className="proof-num" aria-label={`Note moyenne ${reviews.rating} sur 5`}>{reviews.rating}</p>
           <div>
-            <p className="label tick fade">Finn’s / Creil</p>
-            <h2 className="d d-l split"><Lines text={"Le style\nse joue\ndans le\ndétail."} /></h2>
-          </div>
-          <div className="intro-side">
-            <p className="lead fade">Maison de coiffure masculine à Creil depuis 1999.</p>
-            <p className="body fade">Des coupes soignées, des finitions nettes, un service rapide et personnalisé. Un savoir-faire transmis de père en fils, dans une ambiance chaleureuse et authentique.</p>
-            <Link className="link-more fade" href="/histoire"><span className="ul">Notre histoire</span> <Arr /></Link>
+            <p className="rv-stars" aria-hidden="true">★★★★★</p>
+            <p className="proof-count">{reviews.count} avis clients vérifiés</p>
           </div>
         </div>
-        <div className="intro-fig">
-          <div className="mask"><Fig m={media.intro2} ratio="4/5" /></div>
-          <div className="mask"><Fig m={media.intro} ratio="16/10" speed={5} /></div>
-        </div>
+        <div className="proof-cards" data-lenis-prevent>{picks.map(r => <ReviewCard r={r} key={r.text} />)}</div>
+        <Link className="link-more" href="/avis"><span className="ul">Lire tous les avis</span> <Arr /></Link>
       </div>
     </section>
   );
 }
 
-export function StoryTeaser() {
-  return (
-    <section className="sec cream story-h">
-      <div className="big-year" aria-hidden="true" data-speed="10">1999</div>
-      <div className="wrap">
-        <p className="label tick fade">Our story / Notre histoire</p>
-        <h2 className="d d-l split"><Lines text={"Depuis\n1999."} /></h2>
-        <div className="story-cols">
-          <p className="lead fade">Fondé en 1999 par {salon.founder}, coiffeur depuis les années 1960, Finn’s Barber est devenu une institution de la coiffure masculine à Creil.</p>
-          <p className="body fade">Le métier s’y transmet de père en fils, avec la même exigence : des coupes précises, des finitions impeccables et un accueil qui fait revenir.</p>
-        </div>
-        <Timeline />
-        <Link className="link-more fade" href="/histoire"><span className="ul">Lire notre histoire</span> <Arr /></Link>
-      </div>
-    </section>
-  );
-}
-
-export function ServicesTeaser() {
-  return (
-    <section className="sec cream" id="services" style={{ paddingTop: 0 }}>
-      <div className="wrap">
-        <div className="svc-head">
-          <div>
-            <p className="label tick fade">Services / 01</p>
-            <h2 className="d d-l split"><Lines text={"Simple.\nPrécis."} /></h2>
-          </div>
-          <Link className="link-more fade" href="/prestations"><span className="ul">Toutes les prestations</span> <Arr /></Link>
-        </div>
-        <ServiceRows />
-        <p className="svc-note fade">Réservation en ligne 24h/24, confirmation immédiate.</p>
-      </div>
-    </section>
-  );
-}
-
+/* ---------- The Finn’s cut ---------- */
 export function TheCut() {
   return (
-    <Pinned><section className="cut" id="cut">
+    <section className="cut" id="cut">
       <div className="cut-bg"><Fig m={media.cut} fill sizes="100vw" /></div>
       <div className="cut-veil" />
       <div className="wrap cut-in">
@@ -106,78 +100,76 @@ export function TheCut() {
           {["Précision", "Geste", "Style"].map(w => <li key={w}><span className="ln"><span className="ln-i">{w}</span></span></li>)}
         </ul>
       </div>
-    </section></Pinned>
+    </section>
   );
 }
 
-export function Geste() {
+/* ---------- Le travail (aperçu, photos différentes de la galerie) ---------- */
+export function Work() {
+  const items = ["w1", "w2", "w3", "w4"].map(k => media[k]);
   return (
-    <section className="sec cream" id="geste">
+    <section className="sec cream work">
       <div className="wrap">
-        <p className="label tick fade">Le geste</p>
-        <h2 className="d d-l split"><Lines text={"Le geste\nfait la\ndifférence."} /></h2>
+        <div className="sec-head sec-head--row">
+          <div>
+            <p className="label tick fade">Le travail</p>
+            <h2 className="d d-l split"><Lines text={"Cuts /\nDetails."} /></h2>
+          </div>
+          <Link className="btn btn--ghost fade" href="/galerie">Voir la galerie <Arr /></Link>
+        </div>
+        <div className="work-grid">
+          {items.map((m, i) => (
+            <Link key={i} href="/galerie" className="work-i mask" data-cursor="view" aria-label={`Galerie : ${m.note}`}>
+              <Fig m={m} fill sizes="(max-width: 760px) 50vw, 25vw" />
+            </Link>
+          ))}
+        </div>
       </div>
-      <div className="wrap geste-grid">
-        <ol className="geste-steps">
-          {steps.map((s, i) => (
-            <li className="gs" data-i={i} key={s.t}>
-              <span className="gs-n">{pad2(i + 1)}</span>
-              <h3 className="gs-t d d-m">{s.t}</h3>
-              <p className="body">{s.d}</p>
-              <div className="gs-m"><Fig m={media[s.m]} ratio="4/5" /></div>
+    </section>
+  );
+}
+
+/* ---------- Depuis 1999 ---------- */
+export function Since() {
+  return (
+    <section className="sec navy since">
+      <div className="wrap since-grid">
+        <div className="since-txt">
+          <p className="label tick fade">Depuis 1999</p>
+          <h2 className="d d-l split"><Lines text={"De père\nen fils."} /></h2>
+          <p className="lead fade">Le salon de coiffure homme de Creil, rue Jean Jaurès.</p>
+          <Link className="link-more fade" href="/histoire"><span className="ul">Notre histoire</span> <Arr /></Link>
+        </div>
+        <div className="since-img mask"><Fig m={media.since} fill speed={4} sizes="(max-width: 900px) 100vw, 55vw" /></div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Conseils ---------- */
+export function ConseilsTeaser() {
+  return (
+    <section className="sec cream tips">
+      <div className="wrap">
+        <div className="sec-head sec-head--row">
+          <div>
+            <p className="label tick fade">Conseils</p>
+            <h2 className="d d-m split"><Lines text={"Les conseils\nde la maison."} /></h2>
+          </div>
+          <Link className="link-more fade" href="/conseils"><span className="ul">Tous les conseils</span> <Arr /></Link>
+        </div>
+        <ul className="tips-list">
+          {conseils.slice(0, 4).map(a => (
+            <li key={a.slug} className="fade">
+              <Link className="tip" href={`/conseils/${a.slug}`}>
+                <span className="label tip-cat">{a.cat}</span>
+                <span className="tip-title">{a.title}</span>
+                <Arr />
+              </Link>
             </li>
           ))}
-        </ol>
-        <div className="geste-media" aria-hidden="true">
-          <div className="gm-stick">
-            {steps.map((s, i) => <div className={`gm-f ${i === 0 ? "on" : ""}`} key={s.t}><Fig m={media[s.m]} fill sizes="45vw" /></div>)}
-          </div>
-        </div>
+        </ul>
       </div>
     </section>
-  );
-}
-
-function MqItems({ list, dup }: { list: GalleryItem[]; dup?: boolean }) {
-  return (
-    <>
-      {list.map((g, i) => (
-        <Link key={(dup ? "d" : "") + i} className={`mq-item ${dup ? "dup" : ""}`} href="/galerie" data-cursor="view"
-          {...(dup ? { "aria-hidden": true, tabIndex: -1 } : { "aria-label": `Voir la galerie : ${g.note}` })}>
-          <Fig m={g} className="fig--sm" sizes="30vw" />
-        </Link>
-      ))}
-    </>
-  );
-}
-
-export function GalleryTeaser() {
-  const row1 = gallery.slice(0, 5), row2 = gallery.slice(5);
-  return (
-    <section className="sec cream">
-      <div className="wrap gal-head">
-        <div>
-          <p className="label tick fade">Selected work</p>
-          <h2 className="d d-l split"><Lines text={"Cuts /\nDetails /\nFinn’s."} /></h2>
-        </div>
-        <Link className="btn btn--ghost" href="/galerie">Voir la galerie <Arr /></Link>
-      </div>
-      <div className="marq marq--a" data-dir="-1"><div className="marq-track"><MqItems list={row1} /><MqItems list={row1} dup /></div></div>
-      <div className="marq marq--b" data-dir="1"><div className="marq-track"><MqItems list={row2} /><MqItems list={row2} dup /></div></div>
-    </section>
-  );
-}
-
-export function LogoSequence() {
-  return (
-    <Pinned><section className="logoseq" id="logoseq" aria-label="Finn’s Barber, since 1999">
-      <div className="ls-photo"><Fig m={media.logo} fill sizes="100vw" /></div>
-      <div className="ls-words wm" aria-hidden="true">
-        <div className="ls-finns">{["F", "I", "N", "N", "’", "S"].map((l, i) => <span className="ls-l" key={i}>{l}</span>)}</div>
-        <div className="ls-barber"><span className="ln"><span className="ln-i">Barber</span></span></div>
-        <div className="ls-line"><FLine className="fline--manual fline--scrub on" /></div>
-      </div>
-      <div className="ls-navy" />
-    </section></Pinned>
   );
 }
