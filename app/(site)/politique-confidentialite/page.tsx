@@ -13,7 +13,7 @@ const mail = salon.email || <Todo />;
 export default function Privacy() {
   return (
     <Legal title={"Confiden-\ntialité."}>
-      <p className="lead" style={{ marginBottom: 12 }}>Le site ne collecte que les informations nécessaires à la prise de rendez-vous. Elles ne sont ni vendues, ni utilisées à des fins publicitaires.</p>
+      <p className="lead" style={{ marginBottom: 12 }}>Le site ne collecte que les informations nécessaires à la prise de rendez-vous et aux réponses à vos messages. Elles ne sont ni vendues, ni utilisées à des fins publicitaires.</p>
       <h2>Responsable du traitement</h2>
       <p>{L.company}, {fullAddress}. Contact : {mail}.</p>
       <h2>Réservation en ligne</h2>
@@ -26,6 +26,8 @@ export default function Privacy() {
       </ul>
       <p>Une empreinte anonymisée de l’adresse IP est conservée avec chaque réservation, pour limiter les réservations abusives. Elle ne permet pas de retrouver l’adresse.</p>
       <p>Vous pouvez annuler un rendez-vous jusqu’à {booking.cancelUntilHours} h avant, grâce au lien personnel affiché après la réservation.</p>
+      <h2>Formulaire de contact</h2>
+      <p>Les messages envoyés depuis la page Contact (nom, téléphone et/ou e-mail, message) servent uniquement à vous répondre. Ils sont lus par l’équipe du salon et conservés 1 an au plus. Une empreinte anonymisée de l’adresse IP limite les envois abusifs.</p>
       <h2>Carte Google Maps</h2>
       <p>La carte de la page Contact n’est chargée qu’après votre accord. Google traite alors des données selon sa propre politique de confidentialité. Voir la page Gestion des cookies.</p>
       <h2>Données techniques</h2>

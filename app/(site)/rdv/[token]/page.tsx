@@ -21,7 +21,7 @@ export default async function Rdv({ params }: { params: Promise<{ token: string 
       <section className="sec cream" style={{ paddingTop: 0 }}>
         <div className="wrap">
           <ManageBooking token={token} canCancel={canCancel} cancelUntilHours={booking.cancelUntilHours}
-            appt={{ serviceName: appt.serviceName, minutes: appt.minutes, priceCents: appt.priceCents, start: appt.start, end: appt.end, status: appt.status, firstName: appt.client.firstName }} />
+            appt={{ serviceName: appt.serviceName, minutes: appt.minutes, priceCents: appt.priceCents, start: appt.start, end: appt.end, status: appt.status, firstName: appt.client.firstName, barber: appt.barber?.name ?? null }} />
         </div>
       </section>
     </>

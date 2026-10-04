@@ -17,6 +17,7 @@ export function POST(req: Request) {
       serviceId: String(b.serviceId ?? ""),
       date: String(b.date ?? ""),
       time: String(b.time ?? ""),
+      barberId: typeof b.barberId === "string" && /^([0-9a-f-]{36}|any)$/i.test(b.barberId) ? b.barberId : "any",
       firstName: v.name(b.firstName),
       lastName: v.name(b.lastName),
       phone: v.phone(b.phone),
@@ -33,6 +34,6 @@ export function POST(req: Request) {
     if (!r.ok) return fail(r.reason, r.reason === "rate" ? 429 : 409);
 
     after(async () => { const a = await findByToken(r.token); if (a) await mailBooked(a, r.token); });
-    return json({ ok: true, token: r.token, start: r.start, end: r.end });
+    return json({ ok: true, token: r.token, start: r.start, end: r.end, barber: r.barber });
   });
 }

@@ -6,7 +6,7 @@ import { fullAddress } from "@/lib/site";
 import { icsHref } from "@/lib/booking/ics";
 import { fmtWhen } from "@/lib/booking/time";
 
-type Appt = { serviceName: string; minutes: number; priceCents: number; start: number; end: number; status: string; firstName: string };
+type Appt = { serviceName: string; minutes: number; priceCents: number; start: number; end: number; status: string; firstName: string; barber: string | null };
 const LABEL: Record<string, string> = { confirmed: "Confirmé", done: "Honoré", no_show: "Manqué", cancelled: "Annulé" };
 
 export default function ManageBooking({ token, appt, canCancel, cancelUntilHours }: { token: string; appt: Appt; canCancel: boolean; cancelUntilHours: number }) {
@@ -33,6 +33,7 @@ export default function ManageBooking({ token, appt, canCancel, cancelUntilHours
       <p className="lead bk-done-when">{fmtWhen(appt.start)}</p>
       <dl className="bk-recap">
         <div><dt>Au nom de</dt><dd>{appt.firstName}</dd></div>
+        {appt.barber && <div><dt>Coiffeur</dt><dd>{appt.barber}</dd></div>}
         <div><dt>Durée</dt><dd>{appt.minutes} min</dd></div>
         <div><dt>Tarif</dt><dd>{(appt.priceCents / 100).toFixed(0)} €, réglé au salon</dd></div>
         <div><dt>Adresse</dt><dd>{fullAddress}</dd></div>

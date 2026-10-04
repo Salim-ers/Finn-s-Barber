@@ -39,7 +39,13 @@ npm run build   # vérification de production
 Node.js 20.9 ou plus récent.
 
 ## Réservation en ligne et tableau de bord
-Les clients réservent directement sur le site (`/reserver`) pour chaque prestation de `services`. Le salon gère tout depuis **`/admin`** : agenda du jour et de la semaine, pointage (venu, absent), rendez-vous pris par téléphone, créneaux bloqués, fermetures exceptionnelles, fichier clients avec historique et fiche, nombre de coiffeurs en simultané.
+Les clients réservent directement sur le site (`/reserver`) pour chaque prestation de `services`. Le client choisit sa prestation, son coiffeur (ou « sans préférence »), son jour et son heure. Le salon gère tout depuis **`/admin`** :
+- **Agenda** : jour et semaine, filtre par coiffeur, pointage (venu, absent), rendez-vous pris par téléphone, changement de coiffeur, fermetures du salon ;
+- **Clients** : fichier avec historique et fiche de préférences ;
+- **Messages** : messages du formulaire de contact ;
+- **Équipe** : coiffeurs (ajout, désactivation), horaires de chacun jour par jour, absences (congés, maladie, formation, quelques heures).
+
+Un coiffeur n’est proposé en ligne que pendant ses horaires, hors absences et hors rendez-vous déjà pris. En « sans préférence », le site attribue le coiffeur libre le moins chargé de la journée. Au premier démarrage, l’équipe de `team` (`lib/data.ts`) est créée avec les horaires du salon.
 
 ### Mise en service sur Vercel (≈ 10 minutes, gratuit)
 1. **Base de données** : Vercel → projet → *Storage* → *Create Database* → **Neon (Postgres)** → reliez-la au projet. La variable `DATABASE_URL` est ajoutée automatiquement. Les tables se créent seules au premier rendez-vous.
@@ -49,7 +55,7 @@ Les clients réservent directement sur le site (`/reserver`) pour chaque prestat
 3. **E-mails de confirmation (facultatif)** : créez un compte sur resend.com, vérifiez le domaine du site, puis ajoutez :
    - `RESEND_API_KEY` ;
    - `MAIL_FROM`, par exemple `Finn’s Barber <rdv@finnsbarber.fr>` ;
-   - `SALON_NOTIFY_EMAIL` : l’adresse qui reçoit chaque réservation et annulation (sinon `salon.email`).
+   - `SALON_NOTIFY_EMAIL` : l’adresse qui reçoit chaque réservation, annulation et message du formulaire de contact (sinon `salon.email`).
 
    Sans ces variables, rien n’est envoyé : le client garde son lien personnel « Gérer mon rendez-vous » à l’écran.
 4. **Redéployez** (Deployments → ⋯ → Redeploy).
@@ -61,9 +67,9 @@ Tant que `DATABASE_URL` n’est pas configurée, la page de réservation affiche
 - au plus tôt 1 h à l’avance, au plus tard 30 jours à l’avance ;
 - annulation en ligne jusqu’à 2 h avant ;
 - 2 rendez-vous à venir maximum par numéro de téléphone ;
-- un créneau reste proposé tant qu’un coiffeur est libre (nombre réglable dans `/admin` → Réglages, 0 = réservation suspendue).
+- un créneau reste proposé tant qu’un coiffeur au planning est libre ; un coiffeur choisi n’est proposé que sur ses propres disponibilités.
 
-Deux réservations simultanées ne peuvent pas prendre la même dernière place (verrou en base). Un champ piège et une limite par connexion freinent les robots.
+Deux réservations simultanées ne peuvent pas prendre le même coiffeur au même moment (verrou en base). Un champ piège et une limite par connexion freinent les robots.
 
 > **Planity** : si l’agenda Planity du salon reste ouvert, deux agendas coexistent et un même créneau peut être pris des deux côtés. Fermez la prise de rendez-vous Planity ou bloquez les créneaux correspondants dans `/admin`.
 

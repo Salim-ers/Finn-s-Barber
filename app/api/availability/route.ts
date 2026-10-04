@@ -4,11 +4,13 @@ import { serviceById } from "@/lib/booking/slots";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/availability?service=coupe → créneaux libres jour par jour. */
+/** GET /api/availability?service=coupe&barber=<id>|any → coiffeurs et créneaux libres jour par jour. */
 export function GET(req: Request) {
   return handle(async () => {
-    const id = new URL(req.url).searchParams.get("service");
+    const q = new URL(req.url).searchParams;
+    const id = q.get("service");
     if (!serviceById(id)) return fail("service");
-    return json({ days: await availability(id!) });
+    const r = await availability(id!, q.get("barber") || "any");
+    return r ? json(r) : fail("barber");
   });
 }

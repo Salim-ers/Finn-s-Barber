@@ -6,6 +6,8 @@
    ========================================================= */
 import { mkdirSync } from "node:fs";
 import path from "node:path";
+import { salon, team } from "@/lib/data";
+import { parseH } from "@/lib/site";
 
 export type Row = Record<string, unknown>;
 export type Q = { text: string; params?: unknown[] };
@@ -50,8 +52,45 @@ const SCHEMA = [
     reason text NOT NULL DEFAULT '',
     created_at timestamptz NOT NULL DEFAULT now()
   )`,
-  `CREATE TABLE IF NOT EXISTS settings (key text PRIMARY KEY, value jsonb NOT NULL)`
+  `CREATE TABLE IF NOT EXISTS settings (key text PRIMARY KEY, value jsonb NOT NULL)`,
+  // Coiffeurs : horaires par jour ({ tuesday: ["10:00", "19:00"], monday: null, … }) et absences
+  `CREATE TABLE IF NOT EXISTS barbers (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name text NOT NULL,
+    position int NOT NULL DEFAULT 0,
+    active boolean NOT NULL DEFAULT true,
+    schedule jsonb NOT NULL DEFAULT '{}',
+    created_at timestamptz NOT NULL DEFAULT now()
+  )`,
+  `CREATE TABLE IF NOT EXISTS absences (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    barber_id uuid NOT NULL REFERENCES barbers(id) ON DELETE CASCADE,
+    starts_at timestamptz NOT NULL,
+    ends_at timestamptz NOT NULL,
+    reason text NOT NULL DEFAULT '',
+    created_at timestamptz NOT NULL DEFAULT now()
+  )`,
+  `CREATE INDEX IF NOT EXISTS absences_range_idx ON absences (starts_at, ends_at)`,
+  `ALTER TABLE appointments ADD COLUMN IF NOT EXISTS barber_id uuid REFERENCES barbers(id) ON DELETE SET NULL`,
+  // Formulaire de contact
+  `CREATE TABLE IF NOT EXISTS messages (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name text NOT NULL,
+    phone text NOT NULL DEFAULT '',
+    email text NOT NULL DEFAULT '',
+    body text NOT NULL,
+    read boolean NOT NULL DEFAULT false,
+    ip_hash text,
+    created_at timestamptz NOT NULL DEFAULT now()
+  )`
 ];
+
+/** Horaires par défaut d’un coiffeur : ceux du salon. */
+export function salonSchedule() {
+  const out: Record<string, [string, string] | null> = {};
+  for (const [k, v] of Object.entries(salon.openingHours)) { const h = parseH(v); out[k] = h ? [h.os, h.cs] : null; }
+  return out;
+}
 
 /** Adresse de la base : DATABASE_URL ou POSTGRES_URL, y compris avec un préfixe ajouté par Vercel (ex. STORAGE_DATABASE_URL). */
 export function databaseUrl() {
@@ -84,6 +123,13 @@ async function connect(): Promise<Driver> {
     };
   }
   for (const s of SCHEMA) await d.query(s);
+  // Premier démarrage : l’équipe du salon est créée avec les horaires du salon
+  await d.tx([
+    { text: `SELECT pg_advisory_xact_lock(hashtext('finns-seed'))` },
+    { text: `INSERT INTO barbers (name, position, schedule)
+      SELECT v.name, v.pos, $2::jsonb FROM unnest($1::text[]) WITH ORDINALITY AS v(name, pos)
+      WHERE NOT EXISTS (SELECT 1 FROM barbers)`, params: [team, JSON.stringify(salonSchedule())] }
+  ]);
   return d;
 }
 

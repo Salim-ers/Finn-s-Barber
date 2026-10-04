@@ -8,12 +8,14 @@ import { icsHref } from "@/lib/booking/ics";
 import { fmtDay, fmtWhen, toMin } from "@/lib/booking/time";
 
 type Day = { date: string; slots: string[] };
-type Done = { token: string; start: number; end: number };
+type Done = { token: string; start: number; end: number; barber: string | null };
+type BarberOpt = { id: string; name: string };
 type Form = { firstName: string; lastName: string; phone: string; email: string; note: string; website: string };
 
 const MSG: Record<string, string> = {
   full: "Ce créneau vient d’être pris. Choisissez-en un autre, la liste a été mise à jour.",
   slot: "Ce créneau n’est plus disponible. Choisissez-en un autre, la liste a été mise à jour.",
+  barber: "Ce coiffeur n’est plus disponible sur ce créneau. Choisissez un autre horaire ou « Sans préférence ».",
   limit: `Vous avez déjà ${booking.maxActivePerClient} rendez-vous à venir avec ce numéro. Pour en ajouter un, contactez le salon.`,
   rate: "Trop de réservations depuis cette connexion. Réessayez un peu plus tard.",
   network: "La connexion a échoué. Vérifiez votre réseau et réessayez."
@@ -30,6 +32,8 @@ function scrollToEl(el: HTMLElement | null) {
 export default function BookingWizard({ initialService }: { initialService?: string }) {
   const [svcId, setSvcId] = useState(services.some(s => s.id === initialService) ? initialService! : "");
   const [days, setDays] = useState<Day[] | null>(null);
+  const [barbers, setBarbers] = useState<BarberOpt[]>([]);
+  const [barberId, setBarberId] = useState("any");
   const [loadErr, setLoadErr] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -41,21 +45,24 @@ export default function BookingWizard({ initialService }: { initialService?: str
   const slotRef = useRef<HTMLElement>(null), formRef = useRef<HTMLElement>(null), topRef = useRef<HTMLDivElement>(null);
   const svc = services.find(s => s.id === svcId);
 
-  const load = useCallback(async (id: string, keepDate?: string) => {
+  const load = useCallback(async (id: string, who = "any", keepDate?: string) => {
     setDays(null); setLoadErr("");
     try {
-      const r = await fetch(`/api/availability?service=${id}`, { cache: "no-store" });
+      const r = await fetch(`/api/availability?service=${id}&barber=${who}`, { cache: "no-store" });
       if (!r.ok) { setLoadErr(r.status === 503 ? "unavailable" : "network"); return; }
-      const d: Day[] = (await r.json()).days;
-      setDays(d);
+      const j: { days: Day[]; barbers: BarberOpt[] } = await r.json();
+      const d = j.days;
+      setBarbers(j.barbers); setDays(d);
       const keep = d.find(x => x.date === keepDate && x.slots.length);
       setDate(keep ? keep.date : d.find(x => x.slots.length)?.date || "");
     } catch { setLoadErr("network"); }
   }, []);
 
-  useEffect(() => { if (svcId) load(svcId); }, [svcId, load]);
+  useEffect(() => { if (svcId) load(svcId, barberId, date); }, [svcId, barberId, load]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pickService = (id: string) => { setSvcId(id); setTime(""); setMsg(""); setTimeout(() => scrollToEl(slotRef.current), 80); };
+  const pickBarber = (id: string) => { setBarberId(id); setTime(""); setMsg(""); };
+  const barberName = barbers.find(b => b.id === barberId)?.name;
   const pickTime = (t: string) => { setTime(t); setMsg(""); setTimeout(() => scrollToEl(formRef.current), 80); };
   const set = (k: keyof Form) => (e: { target: { value: string } }) => { setForm(f => ({ ...f, [k]: e.target.value })); setErrs(x => x.filter(y => y !== k)); };
 
@@ -66,13 +73,13 @@ export default function BookingWizard({ initialService }: { initialService?: str
     if (local.length) { setErrs(local); return; }
     setSending(true); setMsg("");
     try {
-      const r = await fetch("/api/bookings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId: svc.id, date, time, ...form }) });
+      const r = await fetch("/api/bookings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId: svc.id, date, time, barberId, ...form }) });
       const j = await r.json().catch(() => ({}));
-      if (r.ok && j.token) { setDone({ token: j.token, start: j.start, end: j.end }); setTimeout(() => scrollToEl(topRef.current), 60); return; }
+      if (r.ok && j.token) { setDone({ token: j.token, start: j.start, end: j.end, barber: j.barber ?? null }); setTimeout(() => scrollToEl(topRef.current), 60); return; }
       if (j.error === "invalid") { setErrs(j.fields || []); return; }
       if (j.error === "unavailable") { setLoadErr("unavailable"); return; }
       setMsg(MSG[j.error] || MSG.network);
-      if (j.error === "full" || j.error === "slot") { setTime(""); load(svc.id, date); }
+      if (j.error === "full" || j.error === "slot" || j.error === "barber") { setTime(""); load(svc.id, barberId, date); }
     } catch { setMsg(MSG.network); } finally { setSending(false); }
   }
 
@@ -81,7 +88,7 @@ export default function BookingWizard({ initialService }: { initialService?: str
       <div className="bk-done" ref={topRef}>
         <p className="label tick">Rendez-vous confirmé</p>
         <h2 className="bk-done-title">C’est réservé.</h2>
-        <p className="lead bk-done-when">{svc.name}, {fmtWhen(done.start)}.</p>
+        <p className="lead bk-done-when">{svc.name}, {fmtWhen(done.start)}{done.barber ? `, avec ${done.barber}` : ""}.</p>
         <dl className="bk-recap">
           <div><dt>Durée</dt><dd>{svc.duration}</dd></div>
           <div><dt>Tarif</dt><dd>{svc.price}, réglé au salon</dd></div>
@@ -127,12 +134,27 @@ export default function BookingWizard({ initialService }: { initialService?: str
             </button>
           ))}
         </div>
+        {svcId && barbers.length > 0 && (
+          <div className="bk-who">
+            <p className="bk-who-q">Avec qui ?</p>
+            <div className="bk-barbers" role="radiogroup" aria-label="Coiffeur">
+              <button type="button" role="radio" aria-checked={barberId === "any"} className="bk-barber" onClick={() => pickBarber("any")}>
+                <span className="bk-av bk-av--any" aria-hidden="true">✦</span><span className="bk-barber-name">Sans préférence</span>
+              </button>
+              {barbers.map(b => (
+                <button key={b.id} type="button" role="radio" aria-checked={barberId === b.id} className="bk-barber" onClick={() => pickBarber(b.id)}>
+                  <span className="bk-av" aria-hidden="true">{b.name[0]}</span><span className="bk-barber-name">{b.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <section className={`bk-sec ${svcId ? "" : "is-locked"}`} ref={slotRef} aria-labelledby="bk-s2">
         <h2 className="bk-h" id="bk-s2"><span>02</span>Le créneau</h2>
         {!svcId ? <p className="bk-hint">Choisissez d’abord une prestation.</p>
-          : loadErr ? <p className="bk-msg" role="alert">{MSG.network} <button type="button" className="ul" onClick={() => load(svcId)}>Réessayer</button></p>
+          : loadErr ? <p className="bk-msg" role="alert">{MSG.network} <button type="button" className="ul" onClick={() => load(svcId, barberId, date)}>Réessayer</button></p>
           : !days ? <p className="bk-hint" aria-live="polite">Chargement des disponibilités…</p>
           : (
             <>
@@ -155,7 +177,7 @@ export default function BookingWizard({ initialService }: { initialService?: str
                     </div>
                   ))}
                 </div>
-              ) : <p className="bk-hint">Aucun créneau disponible sur les {booking.horizonDays} prochains jours.</p>}
+              ) : <p className="bk-hint">{barberName ? <>Aucun créneau avec {barberName} sur les {booking.horizonDays} prochains jours. <button type="button" className="ul" onClick={() => pickBarber("any")}>Voir tous les coiffeurs</button></> : <>Aucun créneau disponible sur les {booking.horizonDays} prochains jours.</>}</p>}
             </>
           )}
       </section>
@@ -179,6 +201,7 @@ export default function BookingWizard({ initialService }: { initialService?: str
               <p className="label">Récapitulatif</p>
               <p className="bk-sum-svc">{svc?.name}</p>
               <p className="bk-sum-when">{fmtDay(date)}<br />à {time}</p>
+              <p className="bk-sum-who">{barberName ? `Avec ${barberName}` : "Avec le premier coiffeur disponible"}</p>
               <p className="bk-sum-meta">{svc?.duration} · {svc?.price}, réglé au salon</p>
               {msg && <p className="bk-msg" role="alert">{msg}</p>}
               <button className="btn bk-submit" type="submit" disabled={sending}>{sending ? "Réservation…" : "Confirmer le rendez-vous"}</button>

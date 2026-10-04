@@ -4,25 +4,39 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import { addDays, fmtDay, hhmm, parisOf } from "@/lib/booking/time";
 
 /* =========================================================
-   TABLEAU DE BORD DU SALON — agenda, clients, réglages
+   TABLEAU DE BORD DU SALON — agenda, clients, messages, équipe
    ========================================================= */
 type Svc = { id: string; name: string; minutes: number; price: string };
 type Rules = { slotStep: number; leadMinutes: number; horizonDays: number; cancelUntilHours: number; maxActivePerClient: number };
 type Status = "confirmed" | "done" | "no_show" | "cancelled";
 type Appt = {
   id: string; serviceId: string; serviceName: string; minutes: number; priceCents: number; start: number; end: number; status: Status; source: string; note: string; createdAt: number;
+  barber: { id: string; name: string } | null;
   client: { id: string; firstName: string; lastName: string; phone: string; email: string; visits: number; noShows: number };
 };
 type Block = { id: string; reason: string; start: number; end: number };
-type DayData = { date: string; capacity: number; appointments: Appt[]; blocks: Block[]; week: { date: string; count: number }[] };
+type Absence = { id: string; barberId: string; barberName: string; start: number; end: number; reason: string };
+type DayBarber = { id: string; name: string; active: boolean; working: boolean };
+type DayData = { date: string; appointments: Appt[]; blocks: Block[]; barbers: DayBarber[]; absences: Absence[]; week: { date: string; count: number }[] };
 type Client = { id: string; firstName: string; lastName: string; phone: string; email: string; notes: string; visits: number; noShows: number; upcoming: number; spentCents: number; last: number | null; next: number | null };
+type Schedule = Record<string, [string, string] | null>;
+type Barber = { id: string; name: string; position: number; active: boolean; schedule: Schedule };
+type Message = { id: string; name: string; phone: string; email: string; body: string; read: boolean; createdAt: number };
 
 const STATUS: Record<Status, string> = { confirmed: "Confirmé", done: "Venu", no_show: "Absent", cancelled: "Annulé" };
+const DAYS: [string, string][] = [["monday", "Lundi"], ["tuesday", "Mardi"], ["wednesday", "Mercredi"], ["thursday", "Jeudi"], ["friday", "Vendredi"], ["saturday", "Samedi"], ["sunday", "Dimanche"]];
+const REASONS = ["Congés", "Maladie", "Formation", "Rendez-vous", "Autre"];
 const time = (t: number) => hhmm(parisOf(t).min);
 const euros = (c: number) => `${(c / 100).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} €`;
 const phoneFmt = (p: string) => (/^0\d{9}$/.test(p) ? p.replace(/(\d{2})(?=\d)/g, "$1 ") : p);
 const todayParis = () => parisOf(Date.now()).date;
 const shortDate = (t: number) => { const { date } = parisOf(t); return fmtDay(date, { day: "numeric", month: "short", year: "numeric" }); };
+/** « 12 oct. → 18 oct. », « toute la journée » ou « 14:00 – 16:00 » */
+function absText(a: Absence) {
+  const s = parisOf(a.start), e = parisOf(a.end - 1);
+  if (s.min === 0 && parisOf(a.end).min === 0) return s.date === e.date ? `${shortDate(a.start)}, toute la journée` : `du ${shortDate(a.start)} au ${shortDate(a.end - 1)}`;
+  return `${shortDate(a.start)}, ${time(a.start)} – ${time(a.end)}`;
+}
 
 async function api<T = Record<string, unknown>>(path: string, init?: RequestInit): Promise<{ ok: boolean; status: number; data: T }> {
   const r = await fetch(path, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers || {}) }, cache: "no-store" });
@@ -32,15 +46,21 @@ async function api<T = Record<string, unknown>>(path: string, init?: RequestInit
 }
 
 export default function Dashboard({ services, rules }: { services: Svc[]; rules: Rules }) {
-  const [tab, setTab] = useState<"agenda" | "clients" | "settings">("agenda");
+  const [tab, setTab] = useState<"agenda" | "clients" | "messages" | "team">("agenda");
+  const [unread, setUnread] = useState(0);
+  const refreshUnread = useCallback(() => { api<{ unread: number }>("/api/admin/messages").then(r => r.ok && setUnread(r.data.unread)).catch(() => {}); }, []);
+  useEffect(() => { refreshUnread(); const t = setInterval(refreshUnread, 120000); return () => clearInterval(t); }, [refreshUnread]);
   const logout = async () => { await api("/api/admin/session", { method: "DELETE" }); window.location.reload(); };
+  const tabs = [["agenda", "Agenda"], ["clients", "Clients"], ["messages", "Messages"], ["team", "Équipe"]] as const;
   return (
-    <div className="ad">
+    <div className="dsh-app">
       <header className="dsh-top">
         <p className="dsh-brand">Finn’s<span>Tableau de bord</span></p>
         <nav className="dsh-tabs" aria-label="Sections">
-          {([["agenda", "Agenda"], ["clients", "Clients"], ["settings", "Réglages"]] as const).map(([k, l]) => (
-            <button key={k} type="button" aria-current={tab === k ? "page" : undefined} onClick={() => setTab(k)}>{l}</button>
+          {tabs.map(([k, l]) => (
+            <button key={k} type="button" aria-current={tab === k ? "page" : undefined} onClick={() => setTab(k)}>
+              {l}{k === "messages" && unread > 0 && <span className="dsh-count" aria-label={`${unread} non lus`}>{unread}</span>}
+            </button>
           ))}
         </nav>
         <div className="dsh-top-r">
@@ -51,7 +71,8 @@ export default function Dashboard({ services, rules }: { services: Svc[]; rules:
       <main className="dsh-main">
         {tab === "agenda" && <Agenda services={services} />}
         {tab === "clients" && <Clients />}
-        {tab === "settings" && <Settings rules={rules} />}
+        {tab === "messages" && <Messages onChange={refreshUnread} />}
+        {tab === "team" && <Team rules={rules} />}
       </main>
     </div>
   );
@@ -62,6 +83,7 @@ function Agenda({ services }: { services: Svc[] }) {
   const [date, setDate] = useState(todayParis);
   const [data, setData] = useState<DayData | null>(null);
   const [err, setErr] = useState("");
+  const [who, setWho] = useState("all");
 
   const load = useCallback(async (d: string, silent = false) => {
     if (!silent) setErr("");
@@ -73,15 +95,18 @@ function Agenda({ services }: { services: Svc[] }) {
 
   useEffect(() => { load(date); const t = setInterval(() => load(date, true), 60000); return () => clearInterval(t); }, [date, load]);
 
-  const appts = data?.appointments ?? [];
-  const live = appts.filter(a => a.status !== "cancelled");
+  const all = data?.appointments ?? [];
+  const appts = who === "all" ? all : who === "none" ? all.filter(a => !a.barber) : all.filter(a => a.barber?.id === who);
+  const live = (list: Appt[]) => list.filter(a => a.status === "confirmed" || a.status === "done");
   const stats = {
-    count: appts.filter(a => a.status === "confirmed" || a.status === "done").length,
-    revenue: appts.filter(a => a.status === "confirmed" || a.status === "done").reduce((s, a) => s + a.priceCents, 0),
-    done: appts.filter(a => a.status === "done").length,
-    noShow: appts.filter(a => a.status === "no_show").length,
-    cancelled: appts.filter(a => a.status === "cancelled").length
+    count: live(appts).length, revenue: live(appts).reduce((s, a) => s + a.priceCents, 0),
+    done: appts.filter(a => a.status === "done").length, noShow: appts.filter(a => a.status === "no_show").length, cancelled: appts.filter(a => a.status === "cancelled").length
   };
+  const barbers = data?.barbers.filter(b => b.active) ?? [];
+  const resting = barbers.filter(b => !b.working && !data?.absences.some(a => a.barberId === b.id));
+  // Un même coiffeur sur deux rendez-vous qui se chevauchent (après une réattribution ou un ajout forcé)
+  const active = all.filter(a => a.barber && a.status !== "cancelled" && a.status !== "no_show");
+  const conflicts = new Set(active.filter(a => active.some(o => o.id !== a.id && o.barber!.id === a.barber!.id && o.start < a.end && o.end > a.start)).map(a => a.id));
 
   async function patch(id: string, body: object) {
     const r = await api(`/api/admin/appointments/${id}`, { method: "PATCH", body: JSON.stringify(body) });
@@ -113,6 +138,21 @@ function Agenda({ services }: { services: Svc[] }) {
         </div>
       )}
 
+      {data && barbers.length > 0 && (
+        <div className="dsh-chips" role="group" aria-label="Filtrer par coiffeur">
+          <button type="button" aria-pressed={who === "all"} onClick={() => setWho("all")}>Tous <em>{live(all).length}</em></button>
+          {barbers.map(b => <button key={b.id} type="button" aria-pressed={who === b.id} onClick={() => setWho(b.id)}>{b.name} <em>{live(all.filter(a => a.barber?.id === b.id)).length}</em></button>)}
+          {all.some(a => !a.barber) && <button type="button" aria-pressed={who === "none"} onClick={() => setWho("none")}>Sans coiffeur <em>{live(all.filter(a => !a.barber)).length}</em></button>}
+        </div>
+      )}
+
+      {data && (data.absences.length > 0 || resting.length > 0) && (
+        <div className="dsh-absent">
+          {data.absences.map(a => <p key={a.id}><strong>{a.barberName}</strong> absent · {a.reason || "Absence"} ({absText(a)})</p>)}
+          {resting.length > 0 && <p><strong>{resting.map(b => b.name).join(", ")}</strong> {resting.length > 1 ? "ne travaillent pas" : "ne travaille pas"} ce jour-là</p>}
+        </div>
+      )}
+
       <div className="dsh-stats">
         <Stat k="Rendez-vous" v={String(stats.count)} />
         <Stat k="Chiffre prévu" v={euros(stats.revenue)} />
@@ -125,24 +165,24 @@ function Agenda({ services }: { services: Svc[] }) {
 
       <div className="dsh-grid">
         <section className="dsh-card dsh-list" aria-label="Rendez-vous du jour">
-          <div className="dsh-card-h"><h2>Rendez-vous</h2>{data && <span className="dsh-muted">{data.capacity} coiffeur{data.capacity > 1 ? "s" : ""} en simultané</span>}</div>
+          <div className="dsh-card-h"><h2>Rendez-vous</h2>{data && <span className="dsh-muted">{barbers.filter(b => b.working).length} coiffeur(s) au planning</span>}</div>
           {!data && !err && <p className="dsh-muted">Chargement…</p>}
-          {data && !appts.length && <p className="dsh-empty">Aucun rendez-vous ce jour-là.</p>}
+          {data && !appts.length && <p className="dsh-empty">Aucun rendez-vous{who !== "all" ? " pour ce coiffeur" : ""} ce jour-là.</p>}
           {data?.blocks.map(b => (
             <div className="dsh-block" key={b.id}>
               <span className="dsh-time">{time(b.start)}<br />{time(b.end)}</span>
-              <span>Créneau bloqué{b.reason ? ` — ${b.reason}` : ""}</span>
+              <span>Salon fermé{b.reason ? ` — ${b.reason}` : ""}</span>
               <button type="button" className="dsh-link" onClick={async () => { await api(`/api/admin/blocks/${b.id}`, { method: "DELETE" }); load(date, true); }}>Rouvrir</button>
             </div>
           ))}
           <ul className="dsh-appts">
-            {appts.map(a => <ApptRow key={a.id} a={a} onPatch={patch} />)}
+            {appts.map(a => <ApptRow key={a.id} a={a} barbers={barbers} conflict={conflicts.has(a.id)} onPatch={patch} />)}
           </ul>
-          {live.length > 0 && <p className="dsh-muted dsh-foot">Pointez chaque client après son passage : les visites et absences alimentent le fichier clients.</p>}
+          {appts.length > 0 && <p className="dsh-muted dsh-foot">Pointez chaque client après son passage : les visites et absences alimentent le fichier clients.</p>}
         </section>
 
         <div className="dsh-side">
-          <NewAppt services={services} date={date} onDone={() => load(date, true)} />
+          <NewAppt services={services} barbers={barbers} date={date} onDone={() => load(date, true)} />
           <BlockForm date={date} onDone={() => load(date, true)} />
         </div>
       </div>
@@ -154,7 +194,7 @@ function Stat({ k, v }: { k: string; v: string }) {
   return <div className="dsh-stat"><span>{k}</span><strong>{v}</strong></div>;
 }
 
-function ApptRow({ a, onPatch }: { a: Appt; onPatch: (id: string, body: object) => void }) {
+function ApptRow({ a, barbers, conflict, onPatch }: { a: Appt; barbers: DayBarber[]; conflict: boolean; onPatch: (id: string, body: object) => void }) {
   const past = a.end < Date.now();
   const toCheck = past && a.status === "confirmed";
   const editNote = () => { const n = window.prompt("Note interne pour ce rendez-vous :", a.note); if (n !== null) onPatch(a.id, { note: n }); };
@@ -169,6 +209,14 @@ function ApptRow({ a, onPatch }: { a: Appt; onPatch: (id: string, body: object) 
         </p>
         <p className="dsh-svc">{a.serviceName} · {euros(a.priceCents)} · <span className="dsh-muted">{a.source === "site" ? "Réservé en ligne" : "Saisi au salon"}</span></p>
         <p className="dsh-contact"><a href={`tel:${a.client.phone}`}>{phoneFmt(a.client.phone)}</a>{a.client.email && <> · <a href={`mailto:${a.client.email}`}>{a.client.email}</a></>}</p>
+        <label className="dsh-who">Coiffeur
+          <select className="dsh-input dsh-input--sm" value={a.barber?.id ?? ""} onChange={e => onPatch(a.id, { barberId: e.target.value || null })}>
+            <option value="">—</option>
+            {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            {a.barber && !barbers.some(b => b.id === a.barber!.id) && <option value={a.barber.id}>{a.barber.name}</option>}
+          </select>
+        </label>
+        {conflict && <p className="dsh-conflict">Double réservation : {a.barber?.name} a un autre client sur ce créneau.</p>}
         {a.note && <p className="dsh-note">« {a.note} »</p>}
         <button type="button" className="dsh-link dsh-small" onClick={editNote}>{a.note ? "Modifier la note" : "Ajouter une note"}</button>
       </div>
@@ -192,13 +240,14 @@ function ApptRow({ a, onPatch }: { a: Appt; onPatch: (id: string, body: object) 
 }
 
 const ERR: Record<string, string> = {
-  full: "Ce créneau est complet : tous les coiffeurs sont pris. Cochez « Ajouter même si complet » pour l’enregistrer quand même.",
+  full: "Aucun coiffeur n’est libre à cette heure. Cochez « Ajouter même si complet » pour l’enregistrer quand même.",
+  barber: "Ce coiffeur n’est pas disponible à cette heure (absent, en repos ou déjà pris). Choisissez-en un autre, ou cochez « Ajouter même si complet ».",
   invalid: "Vérifiez le prénom, le téléphone, la date et l’heure.",
   service: "Prestation inconnue."
 };
 
-function NewAppt({ services, date, onDone }: { services: Svc[]; date: string; onDone: () => void }) {
-  const blank = { serviceId: services[0]?.id ?? "", date, time: "", firstName: "", lastName: "", phone: "", email: "", note: "", force: false };
+function NewAppt({ services, barbers, date, onDone }: { services: Svc[]; barbers: DayBarber[]; date: string; onDone: () => void }) {
+  const blank = { serviceId: services[0]?.id ?? "", barberId: "any", date, time: "", firstName: "", lastName: "", phone: "", email: "", note: "", force: false };
   const [f, setF] = useState(blank);
   const [msg, setMsg] = useState(""), [ok, setOk] = useState(""), [busy, setBusy] = useState(false);
   useEffect(() => setF(x => ({ ...x, date })), [date]);
@@ -208,7 +257,7 @@ function NewAppt({ services, date, onDone }: { services: Svc[]; date: string; on
     e.preventDefault(); setBusy(true); setMsg(""); setOk("");
     const r = await api<{ error?: string }>("/api/admin/appointments", { method: "POST", body: JSON.stringify(f) }).catch(() => null);
     setBusy(false);
-    if (r?.ok) { setOk(`Rendez-vous ajouté : ${f.firstName}, ${f.time}.`); setF({ ...blank, date: f.date, serviceId: f.serviceId }); onDone(); return; }
+    if (r?.ok) { setOk(`Rendez-vous ajouté : ${f.firstName}, ${f.time}.`); setF({ ...blank, date: f.date, serviceId: f.serviceId, barberId: f.barberId }); onDone(); return; }
     setMsg(ERR[r?.data.error ?? ""] || "L’ajout a échoué.");
   }
 
@@ -218,6 +267,12 @@ function NewAppt({ services, date, onDone }: { services: Svc[]; date: string; on
       <div className="dsh-form">
         <label className="dsh-lbl">Prestation
           <select className="dsh-input" value={f.serviceId} onChange={set("serviceId")}>{services.map(s => <option key={s.id} value={s.id}>{s.name} — {s.minutes} min · {s.price}</option>)}</select>
+        </label>
+        <label className="dsh-lbl">Coiffeur
+          <select className="dsh-input" value={f.barberId} onChange={set("barberId")}>
+            <option value="any">Sans préférence (premier libre)</option>
+            {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
         </label>
         <div className="dsh-row">
           <label className="dsh-lbl">Date<input className="dsh-input" type="date" value={f.date} onChange={set("date")} required /></label>
@@ -246,22 +301,22 @@ function BlockForm({ date, onDone }: { date: string; onDone: () => void }) {
   const send = async (body: typeof f) => {
     setMsg("");
     const r = await api("/api/admin/blocks", { method: "POST", body: JSON.stringify(body) }).catch(() => null);
-    if (r?.ok) { setMsg("Créneau bloqué : il n’est plus proposé en ligne."); onDone(); } else setMsg("Vérifiez les heures (début avant fin).");
+    if (r?.ok) { setMsg("Créneau fermé : il n’est plus proposé en ligne."); onDone(); } else setMsg("Vérifiez les heures (début avant fin).");
   };
   return (
     <form className="dsh-card" onSubmit={e => { e.preventDefault(); send(f); }}>
-      <div className="dsh-card-h"><h2>Bloquer un créneau</h2></div>
+      <div className="dsh-card-h"><h2>Fermer le salon</h2></div>
       <div className="dsh-form">
-        <p className="dsh-muted">Pause, absence, fermeture exceptionnelle : le créneau n’est plus proposé aux clients.</p>
+        <p className="dsh-muted">Fermeture pour tout le salon (jour férié, travaux…). Pour l’absence d’un seul coiffeur, utilisez l’onglet Équipe.</p>
         <label className="dsh-lbl">Date<input className="dsh-input" type="date" value={f.date} onChange={e => setF({ ...f, date: e.target.value })} /></label>
         <div className="dsh-row">
           <label className="dsh-lbl">De<input className="dsh-input" type="time" step={300} value={f.from} onChange={e => setF({ ...f, from: e.target.value })} /></label>
           <label className="dsh-lbl">À<input className="dsh-input" type="time" step={300} value={f.to} onChange={e => setF({ ...f, to: e.target.value })} /></label>
         </div>
-        <label className="dsh-lbl">Motif (facultatif)<input className="dsh-input" value={f.reason} onChange={e => setF({ ...f, reason: e.target.value })} placeholder="Ex. pause déjeuner" /></label>
+        <label className="dsh-lbl">Motif (facultatif)<input className="dsh-input" value={f.reason} onChange={e => setF({ ...f, reason: e.target.value })} placeholder="Ex. jour férié" /></label>
         <div className="dsh-row">
-          <button className="btn dsh-full" type="submit">Bloquer</button>
-          <button className="btn btn--ghost dsh-full" type="button" onClick={() => window.confirm(`Fermer toute la journée du ${fmtDay(f.date)} à la réservation en ligne ?`) && send({ ...f, from: "00:00", to: "23:59", reason: f.reason || "Fermeture exceptionnelle" })}>Fermer la journée</button>
+          <button className="btn dsh-full" type="submit">Fermer ce créneau</button>
+          <button className="btn btn--ghost dsh-full" type="button" onClick={() => window.confirm(`Fermer toute la journée du ${fmtDay(f.date)} ?`) && send({ ...f, from: "00:00", to: "23:59", reason: f.reason || "Fermeture exceptionnelle" })}>Toute la journée</button>
         </div>
         {msg && <p className="dsh-muted" role="status">{msg}</p>}
       </div>
@@ -341,7 +396,7 @@ function ClientDetail({ c }: { c: Client }) {
         <p className="dsh-lbl">Historique</p>
         {!hist ? <p className="dsh-muted">Chargement…</p> : (
           <ul className="dsh-hist">
-            {hist.map(h => <li key={h.id}><span>{shortDate(h.start)}, {time(h.start)}</span><span>{h.serviceName}</span><span className={`dsh-pill is-${h.status}`}>{STATUS[h.status]}</span></li>)}
+            {hist.map(h => <li key={h.id}><span>{shortDate(h.start)}, {time(h.start)}</span><span>{h.serviceName}{h.barber ? ` · ${h.barber.name}` : ""}</span><span className={`dsh-pill is-${h.status}`}>{STATUS[h.status]}</span></li>)}
           </ul>
         )}
       </div>
@@ -349,41 +404,189 @@ function ClientDetail({ c }: { c: Client }) {
   );
 }
 
-/* ---------------- Réglages ---------------- */
-function Settings({ rules }: { rules: Rules }) {
-  const [cap, setCap] = useState<number | null>(null);
+/* ---------------- Messages ---------------- */
+function Messages({ onChange }: { onChange: () => void }) {
+  const [list, setList] = useState<Message[] | null>(null);
+  const load = useCallback(async () => {
+    const r = await api<{ messages: Message[] }>("/api/admin/messages").catch(() => null);
+    setList(r?.ok ? r.data.messages : []);
+    onChange();
+  }, [onChange]);
+  useEffect(() => { load(); }, [load]);
+  const patch = async (id: string, read: boolean) => { await api(`/api/admin/messages/${id}`, { method: "PATCH", body: JSON.stringify({ read }) }); load(); };
+  const del = async (id: string) => { if (!window.confirm("Supprimer ce message ?")) return; await api(`/api/admin/messages/${id}`, { method: "DELETE" }); load(); };
+  return (
+    <div className="dsh-messages">
+      <div className="dsh-daybar"><h1 className="dsh-day">Messages</h1></div>
+      {!list && <p className="dsh-muted">Chargement…</p>}
+      {list && !list.length && <section className="dsh-card"><p className="dsh-empty">Aucun message pour l’instant. Ils arrivent ici depuis le formulaire de la page Contact.</p></section>}
+      <div className="dsh-msgs">
+        {list?.map(m => (
+          <article key={m.id} className={`dsh-card dsh-msg ${m.read ? "" : "is-unread"}`}>
+            <div className="dsh-card-h">
+              <h2>{m.name}</h2>
+              <span className="dsh-muted">{shortDate(m.createdAt)}, {time(m.createdAt)}</span>
+            </div>
+            <p className="dsh-contact">
+              {m.phone && <a href={`tel:${m.phone}`}>{phoneFmt(m.phone)}</a>}
+              {m.phone && m.email && " · "}
+              {m.email && <a href={`mailto:${m.email}?subject=${encodeURIComponent("Votre message à Finn’s Barber")}`}>{m.email}</a>}
+            </p>
+            <p className="dsh-msg-body">{m.body}</p>
+            <div className="dsh-row dsh-row--start">
+              <button type="button" className="dsh-btn" onClick={() => patch(m.id, !m.read)}>{m.read ? "Marquer non lu" : "Marquer comme lu"}</button>
+              <button type="button" className="dsh-btn dsh-btn--ghost" onClick={() => del(m.id)}>Supprimer</button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Équipe : coiffeurs, horaires, absences ---------------- */
+function Team({ rules }: { rules: Rules }) {
+  const [barbers, setBarbers] = useState<Barber[] | null>(null);
+  const [absences, setAbsences] = useState<Absence[]>([]);
+  const [newName, setNewName] = useState("");
+  const load = useCallback(async () => {
+    const r = await api<{ barbers: Barber[]; absences: Absence[] }>("/api/admin/barbers").catch(() => null);
+    if (r?.ok) { setBarbers(r.data.barbers); setAbsences(r.data.absences); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const add = async (e: FormEvent) => {
+    e.preventDefault(); if (!newName.trim()) return;
+    const r = await api("/api/admin/barbers", { method: "POST", body: JSON.stringify({ name: newName }) });
+    if (r.ok) { setNewName(""); load(); } else window.alert("Nom invalide.");
+  };
+
+  return (
+    <div className="dsh-team">
+      <div className="dsh-daybar"><h1 className="dsh-day">Équipe</h1></div>
+      <p className="dsh-muted dsh-intro">Chaque coiffeur est réservable en ligne selon ses horaires, sauf pendant ses absences. En « sans préférence », le site attribue le coiffeur libre le moins chargé de la journée.</p>
+
+      <div className="dsh-team-grid">
+        <div className="dsh-barbers">
+          {!barbers && <p className="dsh-muted">Chargement…</p>}
+          {barbers?.map(b => <BarberCard key={b.id} b={b} onSaved={load} />)}
+          <form className="dsh-card dsh-add" onSubmit={add}>
+            <div className="dsh-card-h"><h2>Ajouter un coiffeur</h2></div>
+            <div className="dsh-row dsh-row--start">
+              <input className="dsh-input" placeholder="Prénom" value={newName} onChange={e => setNewName(e.target.value)} aria-label="Prénom du coiffeur" />
+              <button className="btn" type="submit">Ajouter</button>
+            </div>
+          </form>
+        </div>
+
+        <div className="dsh-side">
+          {barbers && <AbsenceForm barbers={barbers.filter(b => b.active)} onDone={load} />}
+          <section className="dsh-card">
+            <div className="dsh-card-h"><h2>Absences à venir</h2></div>
+            {!absences.length && <p className="dsh-muted">Aucune absence prévue.</p>}
+            <ul className="dsh-abs-list">
+              {absences.map(a => (
+                <li key={a.id}>
+                  <div><strong>{a.barberName}</strong> · {a.reason || "Absence"}<br /><span className="dsh-muted">{absText(a)}</span></div>
+                  <button type="button" className="dsh-link dsh-small" onClick={async () => { if (window.confirm("Supprimer cette absence ?")) { await api(`/api/admin/absences/${a.id}`, { method: "DELETE" }); load(); } }}>Supprimer</button>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section className="dsh-card">
+            <div className="dsh-card-h"><h2>Règles de réservation</h2></div>
+            <ul className="dsh-rules">
+              <li>Un créneau toutes les <strong>{rules.slotStep} minutes</strong>, dans les horaires du salon et du coiffeur.</li>
+              <li>Au plus tôt <strong>{rules.leadMinutes} minutes</strong> à l’avance, au plus tard <strong>{rules.horizonDays} jours</strong> à l’avance.</li>
+              <li>Annulation en ligne jusqu’à <strong>{rules.cancelUntilHours} h</strong> avant.</li>
+              <li>Au maximum <strong>{rules.maxActivePerClient} rendez-vous à venir</strong> par numéro.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BarberCard({ b, onSaved }: { b: Barber; onSaved: () => void }) {
+  const [name, setName] = useState(b.name);
+  const [active, setActive] = useState(b.active);
+  const [sched, setSched] = useState<Schedule>(() => Object.fromEntries(DAYS.map(([k]) => [k, b.schedule[k] ?? null])));
   const [msg, setMsg] = useState("");
-  useEffect(() => { api<{ capacity: number }>("/api/admin/settings").then(r => r.ok && setCap(r.data.capacity)).catch(() => setMsg("Chargement impossible.")); }, []);
+  const toggleDay = (k: string, on: boolean) => setSched(s => ({ ...s, [k]: on ? (s[k] ?? ["10:00", "19:00"]) : null }));
+  const setHour = (k: string, i: 0 | 1, v: string) => setSched(s => { const d = [...(s[k] ?? ["10:00", "19:00"])] as [string, string]; d[i] = v; return { ...s, [k]: d }; });
   const save = async () => {
-    const r = await api("/api/admin/settings", { method: "PUT", body: JSON.stringify({ capacity: cap }) });
-    setMsg(r.ok ? "Enregistré : les créneaux proposés en ligne sont mis à jour." : "Valeur invalide (0 à 12).");
+    const r = await api(`/api/admin/barbers/${b.id}`, { method: "PATCH", body: JSON.stringify({ name, active, schedule: sched }) });
+    setMsg(r.ok ? "Enregistré." : "Vérifiez le prénom et les horaires (début avant fin).");
+    if (r.ok) onSaved();
   };
   return (
-    <div className="dsh-settings">
-      <h1 className="dsh-day">Réglages</h1>
-      <section className="dsh-card">
-        <div className="dsh-card-h"><h2>Coiffeurs disponibles en même temps</h2></div>
-        <div className="dsh-form">
-          <p className="dsh-muted">Un créneau est proposé en ligne tant qu’il reste un fauteuil libre. Mettez 0 pour suspendre la réservation en ligne.</p>
-          <div className="dsh-row dsh-row--start">
-            <button type="button" className="dsh-icon" aria-label="Moins" onClick={() => setCap(c => Math.max(0, (c ?? 0) - 1))}>−</button>
-            <input className="dsh-input dsh-num" type="number" min={0} max={12} value={cap ?? ""} onChange={e => setCap(Number(e.target.value))} aria-label="Nombre de coiffeurs" />
-            <button type="button" className="dsh-icon" aria-label="Plus" onClick={() => setCap(c => Math.min(12, (c ?? 0) + 1))}>+</button>
-            <button type="button" className="btn" onClick={save} disabled={cap === null}>Enregistrer</button>
+    <section className={`dsh-card dsh-barber ${active ? "" : "is-off"}`}>
+      <div className="dsh-card-h">
+        <div className="dsh-barber-id"><span className="dsh-av" aria-hidden="true">{name[0] || "?"}</span><input className="dsh-input dsh-input--name" value={name} onChange={e => { setName(e.target.value); setMsg(""); }} aria-label="Prénom" /></div>
+        <label className="dsh-check"><input type="checkbox" checked={active} onChange={e => { setActive(e.target.checked); setMsg(""); }} /> Réservable en ligne</label>
+      </div>
+      <div className="dsh-sched">
+        {DAYS.map(([k, l]) => {
+          const d = sched[k];
+          return (
+            <div key={k} className={`dsh-sched-row ${d ? "" : "is-off"}`}>
+              <label className="dsh-check"><input type="checkbox" checked={!!d} onChange={e => toggleDay(k, e.target.checked)} /> {l}</label>
+              {d ? (
+                <span className="dsh-sched-h">
+                  <input className="dsh-input dsh-input--sm" type="time" step={900} value={d[0]} onChange={e => setHour(k, 0, e.target.value)} aria-label={`${l}, début`} />
+                  <span>–</span>
+                  <input className="dsh-input dsh-input--sm" type="time" step={900} value={d[1]} onChange={e => setHour(k, 1, e.target.value)} aria-label={`${l}, fin`} />
+                </span>
+              ) : <span className="dsh-muted">Repos</span>}
+            </div>
+          );
+        })}
+      </div>
+      <div className="dsh-row dsh-row--end"><span className="dsh-muted">{msg}</span><button type="button" className="btn" onClick={save}>Enregistrer</button></div>
+    </section>
+  );
+}
+
+function AbsenceForm({ barbers, onDone }: { barbers: Barber[]; onDone: () => void }) {
+  const today = todayParis();
+  const [f, setF] = useState({ barberId: barbers[0]?.id ?? "", from: today, to: today, partial: false, fromTime: "14:00", toTime: "16:00", reason: "Congés" });
+  const [msg, setMsg] = useState("");
+  useEffect(() => { if (!f.barberId && barbers[0]) setF(x => ({ ...x, barberId: barbers[0].id })); }, [barbers, f.barberId]);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault(); setMsg("");
+    const body = f.partial ? { barberId: f.barberId, from: f.from, to: f.from, fromTime: f.fromTime, toTime: f.toTime, reason: f.reason } : { barberId: f.barberId, from: f.from, to: f.to, reason: f.reason };
+    const r = await api("/api/admin/absences", { method: "POST", body: JSON.stringify(body) });
+    if (r.ok) { setMsg("Absence enregistrée : le coiffeur n’est plus proposé sur cette période."); onDone(); } else setMsg("Vérifiez les dates (la fin après le début).");
+  };
+  return (
+    <form className="dsh-card" onSubmit={submit}>
+      <div className="dsh-card-h"><h2>Ajouter une absence</h2></div>
+      <div className="dsh-form">
+        <label className="dsh-lbl">Coiffeur
+          <select className="dsh-input" value={f.barberId} onChange={e => setF({ ...f, barberId: e.target.value })}>{barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
+        </label>
+        <label className="dsh-lbl">Motif
+          <select className="dsh-input" value={f.reason} onChange={e => setF({ ...f, reason: e.target.value })}>{REASONS.map(r => <option key={r}>{r}</option>)}</select>
+        </label>
+        <label className="dsh-check"><input type="checkbox" checked={f.partial} onChange={e => setF({ ...f, partial: e.target.checked })} /> Seulement quelques heures</label>
+        {f.partial ? (
+          <>
+            <label className="dsh-lbl">Jour<input className="dsh-input" type="date" value={f.from} onChange={e => setF({ ...f, from: e.target.value })} /></label>
+            <div className="dsh-row">
+              <label className="dsh-lbl">De<input className="dsh-input" type="time" step={900} value={f.fromTime} onChange={e => setF({ ...f, fromTime: e.target.value })} /></label>
+              <label className="dsh-lbl">À<input className="dsh-input" type="time" step={900} value={f.toTime} onChange={e => setF({ ...f, toTime: e.target.value })} /></label>
+            </div>
+          </>
+        ) : (
+          <div className="dsh-row">
+            <label className="dsh-lbl">Du<input className="dsh-input" type="date" value={f.from} onChange={e => setF({ ...f, from: e.target.value, to: e.target.value > f.to ? e.target.value : f.to })} /></label>
+            <label className="dsh-lbl">Au (inclus)<input className="dsh-input" type="date" value={f.to} min={f.from} onChange={e => setF({ ...f, to: e.target.value })} /></label>
           </div>
-          {msg && <p className="dsh-muted" role="status">{msg}</p>}
-        </div>
-      </section>
-      <section className="dsh-card">
-        <div className="dsh-card-h"><h2>Règles de réservation en ligne</h2></div>
-        <ul className="dsh-rules">
-          <li>Un créneau proposé toutes les <strong>{rules.slotStep} minutes</strong>, selon les horaires d’ouverture.</li>
-          <li>Réservation au plus tôt <strong>{rules.leadMinutes} minutes</strong> à l’avance, au plus tard <strong>{rules.horizonDays} jours</strong> à l’avance.</li>
-          <li>Annulation en ligne jusqu’à <strong>{rules.cancelUntilHours} h</strong> avant le rendez-vous.</li>
-          <li>Au maximum <strong>{rules.maxActivePerClient} rendez-vous à venir</strong> par numéro de téléphone.</li>
-        </ul>
-        <p className="dsh-muted">Ces règles et les horaires se modifient dans lib/data.ts (sections « booking » et « openingHours »).</p>
-      </section>
-    </div>
+        )}
+        {msg && <p className="dsh-muted" role="status">{msg}</p>}
+        <button className="btn dsh-full" type="submit" disabled={!f.barberId}>Enregistrer l’absence</button>
+      </div>
+    </form>
   );
 }

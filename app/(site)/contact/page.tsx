@@ -3,13 +3,14 @@ import type { ReactNode } from "react";
 import { salon } from "@/lib/data";
 import { A, mapsUrl, telHref } from "@/lib/site";
 import { pageMeta } from "@/lib/seo";
-import { Arr, BookButton, CtaBlock, PageHero, Todo } from "@/components/ui";
+import { Arr, BookButton, CtaBlock, Lines, PageHero, Todo } from "@/components/ui";
 import { Hours, OpenStatus } from "@/components/contact/Live";
 import GoogleMap from "@/components/contact/GoogleMap";
+import ContactForm from "@/components/contact/ContactForm";
 
 export const metadata: Metadata = pageMeta(
   "Contact, horaires et accès | Finn’s Barber Creil",
-  "Finn’s Barber, 43 Rue Jean Jaurès, 60100 Creil. Ouvert du mardi au dimanche, 10:00 — 19:00. Plan d’accès, itinéraire et réservation en ligne.",
+  "Finn’s Barber, 43 Rue Jean Jaurès, 60100 Creil. Ouvert du mardi au dimanche, 10:00 — 19:00. Plan d’accès, formulaire de contact et réservation en ligne.",
   "/contact"
 );
 
@@ -58,6 +59,15 @@ export default function Contact() {
               <Row k="Rendez-vous" v="Réserver en ligne" href="/reserver" />
             </dl>
           </div>
+        </div>
+      </section>
+      <section className="sec cream" id="message">
+        <div className="wrap cf-grid">
+          <div>
+            <p className="label tick fade">Une question ?</p>
+            <h2 className="d d-m split"><Lines text={"Écrivez-\nnous."} /></h2>
+          </div>
+          <ContactForm />
         </div>
       </section>
       <CtaBlock />

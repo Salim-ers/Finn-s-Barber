@@ -11,6 +11,7 @@ export function POST(req: Request) {
     const b = await body(req);
     const input = {
       serviceId: String(b.serviceId ?? ""), date: String(b.date ?? ""), time: String(b.time ?? ""),
+      barberId: typeof b.barberId === "string" && /^([0-9a-f-]{36}|any)$/i.test(b.barberId) ? b.barberId : "any",
       firstName: v.name(b.firstName), lastName: v.name(b.lastName) || "-", phone: v.phone(b.phone),
       email: b.email ? v.email(b.email) : "", note: v.note(b.note)
     };

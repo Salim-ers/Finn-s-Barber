@@ -62,17 +62,16 @@ export const services: Service[] = [
 ];
 
 /* Réservation en ligne (voir README, section « Réservation en ligne »).
-   Le nombre de coiffeurs disponibles en même temps se règle dans le tableau de bord (/admin). */
+   Coiffeurs, horaires et absences se gèrent dans le tableau de bord (/admin → Équipe). */
 export const booking = {
   slotStep: 15,          // un créneau proposé toutes les 15 minutes
   leadMinutes: 60,       // délai minimum avant un rendez-vous pris en ligne
   horizonDays: 30,       // réservation possible jusqu’à 30 jours à l’avance
-  defaultCapacity: 3,    // coiffeurs en simultané, tant que rien n’est réglé dans le tableau de bord
   cancelUntilHours: 2,   // annulation en ligne possible jusqu’à 2 h avant le rendez-vous
   maxActivePerClient: 2  // rendez-vous à venir maximum par numéro de téléphone
 };
 
-/* Prénoms de l’équipe, cités dans « Notre histoire ». */
+/* Équipe créée automatiquement dans la base au premier démarrage (modifiable ensuite dans /admin → Équipe). */
 export const team = ["Yassir", "Ayssem", "Sami", "Mimine", "Wassim"];
 
 /* Avis : relevés sur la fiche Planity du salon le 1er octobre 2026 (avis avec commentaire, textes d’origine).
