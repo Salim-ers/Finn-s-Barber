@@ -1,6 +1,6 @@
 import { after } from "next/server";
 import { body, fail, handle, json } from "@/lib/api";
-import { mailCancelled } from "@/lib/booking/mail";
+import { mailClientCancelled, mailSalonCancelled } from "@/lib/booking/mail";
 import { cancelByToken } from "@/lib/booking/repo";
 
 export const dynamic = "force-dynamic";
@@ -9,9 +9,10 @@ export const dynamic = "force-dynamic";
 export function POST(req: Request) {
   return handle(async () => {
     const { token } = await body(req);
-    const r = await cancelByToken(String(token ?? ""));
+    const t = String(token ?? "");
+    const r = await cancelByToken(t);
     if (!r.ok) return fail(r.reason, r.reason === "notfound" ? 404 : 409);
-    after(() => mailCancelled(r.appt));
+    after(async () => { await mailClientCancelled(r.appt, t); await mailSalonCancelled(r.appt); });
     return json({ ok: true });
   });
 }

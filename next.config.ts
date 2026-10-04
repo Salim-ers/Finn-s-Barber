@@ -3,8 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: { formats: ["image/avif", "image/webp"] },
   poweredByHeader: false,
-  // Postgres embarqué (développement local) : chargé tel quel par Node, sans passer par le bundler
-  serverExternalPackages: ["@electric-sql/pglite"],
+  // Postgres embarqué (développement local) et envoi d’e-mails : chargés tels quels par Node, sans passer par le bundler
+  serverExternalPackages: ["@electric-sql/pglite", "nodemailer"],
   async redirects() {
     return [
       { source: "/journal", destination: "/conseils", permanent: true },

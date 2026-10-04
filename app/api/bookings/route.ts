@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { body, fail, handle, json } from "@/lib/api";
 import { ipHash } from "@/lib/auth";
-import { mailBooked } from "@/lib/booking/mail";
+import { mailClientBooked, mailSalonBooked, sendWithin } from "@/lib/booking/mail";
 import { createAppointment, findByToken } from "@/lib/booking/repo";
 import { isDate, toMin } from "@/lib/booking/time";
 import * as v from "@/lib/booking/validate";
@@ -21,19 +21,22 @@ export function POST(req: Request) {
       firstName: v.name(b.firstName),
       lastName: v.name(b.lastName),
       phone: v.phone(b.phone),
-      email: b.email ? v.email(b.email) : "",
+      email: v.email(b.email),
       note: v.note(b.note)
     };
     const bad = [
       !input.firstName && "firstName", !input.lastName && "lastName", !input.phone && "phone",
-      b.email && !input.email && "email", !isDate(input.date) && "date", isNaN(toMin(input.time)) && "time"
+      !input.email && "email", !isDate(input.date) && "date", isNaN(toMin(input.time)) && "time"
     ].filter(Boolean);
     if (bad.length) return json({ error: "invalid", fields: bad }, 400);
 
     const r = await createAppointment(input, { source: "site", ipHash: ipHash(req) });
     if (!r.ok) return fail(r.reason, r.reason === "rate" ? 429 : 409);
 
-    after(async () => { const a = await findByToken(r.token); if (a) await mailBooked(a, r.token); });
-    return json({ ok: true, token: r.token, start: r.start, end: r.end, barber: r.barber });
+    // Confirmation au client avant de répondre (pour lui dire qu’elle est partie), copie au salon ensuite
+    const appt = await findByToken(r.token);
+    const mailed = appt ? await sendWithin(mailClientBooked(appt, r.token)) : false;
+    if (appt) after(() => mailSalonBooked(appt));
+    return json({ ok: true, token: r.token, start: r.start, end: r.end, barber: r.barber, mailed, email: input.email });
   });
 }

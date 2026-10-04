@@ -52,12 +52,17 @@ Un coiffeur n’est proposé en ligne que pendant ses horaires, hors absences et
 2. **Accès au tableau de bord** : *Settings* → *Environment Variables* :
    - `ADMIN_PASSWORD` : le mot de passe du salon pour `/admin` ;
    - `SESSION_SECRET` : une longue chaîne aléatoire (ex. `openssl rand -base64 32`).
-3. **E-mails de confirmation (facultatif)** : créez un compte sur resend.com, vérifiez le domaine du site, puis ajoutez :
-   - `RESEND_API_KEY` ;
-   - `MAIL_FROM`, par exemple `Finn’s Barber <rdv@finnsbarber.fr>` ;
-   - `SALON_NOTIFY_EMAIL` : l’adresse qui reçoit chaque réservation, annulation et message du formulaire de contact (sinon `salon.email`).
+3. **E-mails de confirmation** : chaque client reçoit sa confirmation (avec le rendez-vous à ajouter à son agenda), puis un e-mail s’il annule. Le salon reçoit une copie de chaque réservation, annulation et message. Deux possibilités :
+   - **Gmail (le plus simple, sans nom de domaine)** : créez ou utilisez un compte Gmail du salon, activez la validation en deux étapes (compte Google → Sécurité), puis créez un « mot de passe d’application » (compte Google → Sécurité → Mots de passe des applications). Ajoutez dans Vercel :
+     - `SMTP_HOST` = `smtp.gmail.com`
+     - `SMTP_PORT` = `465`
+     - `SMTP_USER` = l’adresse Gmail du salon
+     - `SMTP_PASS` = le mot de passe d’application (16 lettres, sans espaces)
+     - `MAIL_FROM` (facultatif) = `Finn’s Barber <adresse Gmail>`
+     - `SALON_NOTIFY_EMAIL` = l’adresse qui reçoit les copies (sinon `salon.email`)
+   - **Resend** (avec un nom de domaine vérifié sur resend.com) : `RESEND_API_KEY` et `MAIL_FROM` = `Finn’s Barber <rdv@votre-domaine.fr>`.
 
-   Sans ces variables, rien n’est envoyé : le client garde son lien personnel « Gérer mon rendez-vous » à l’écran.
+   L’onglet Équipe du tableau de bord indique si l’envoi est actif. Toute autre boîte e-mail (OVH, Ionos, Outlook…) fonctionne avec ses propres réglages SMTP.
 4. **Redéployez** (Deployments → ⋯ → Redeploy).
 
 Tant que `DATABASE_URL` n’est pas configurée, la page de réservation affiche un message d’indisponibilité au lieu d’une erreur.

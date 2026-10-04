@@ -277,6 +277,11 @@ export async function clientHistory(id: string) {
   const rows = await (await db()).query(`${SELECT_APPT} WHERE c.id = $1::uuid ORDER BY a.starts_at DESC LIMIT 100`, [id]);
   return rows.map(toAppt);
 }
+/** Supprime un client et tout son historique de rendez-vous (droit à l’effacement). */
+export async function deleteClient(id: string) {
+  const rows = await (await db()).query(`DELETE FROM clients WHERE id = $1::uuid RETURNING id`, [id]);
+  return rows.length > 0;
+}
 export async function setClientNotes(id: string, notes: string) {
   const rows = await (await db()).query(`UPDATE clients SET notes = $2 WHERE id = $1::uuid RETURNING id`, [id, notes]);
   return rows.length > 0;

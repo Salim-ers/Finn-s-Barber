@@ -601,6 +601,7 @@ html.motion:not(.no-loader) body:has(.hx-intro) .nav,html.motion:not(.no-loader)
 .cf-done{display:grid;gap:14px;padding:clamp(24px,3vw,40px);border:1px solid rgba(183,165,138,.65);background:var(--warm)}
 .cf-done .label{color:var(--champ)}
 
+.bk-mailed{font-size:14.5px;line-height:1.55;padding:12px 14px;background:#e8f3ea;border-left:2px solid #24603a;color:var(--navy)}
 /* ---------- Ajustements mobile et tablette ---------- */
 @media (max-width:759px){.cut{height:86svh;min-height:520px}}
 @media (max-width:639px){.bk-steps{display:none}}

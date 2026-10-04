@@ -162,3 +162,5 @@ button.dsh-tr:hover,.dsh-tr.is-open{background:var(--warm)}
 .dsh-abs-list li{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:13.5px;line-height:1.5}
 .dsh-conflict{margin-top:8px;padding:6px 10px;background:#fbeae6;border-left:2px solid #9b2c1f;color:#9b2c1f;font-size:12.5px}
 @media (max-width:1079px){.dsh-team-grid .dsh-side{order:-1}}
+.dsh-btn--danger{margin-top:14px;border-color:#9b2c1f;color:#9b2c1f;background:transparent}
+.dsh-btn--danger:hover{background:#9b2c1f;color:#fff}

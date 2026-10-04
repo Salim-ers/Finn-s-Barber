@@ -45,7 +45,7 @@ async function api<T = Record<string, unknown>>(path: string, init?: RequestInit
   return { ok: r.ok, status: r.status, data: data as T };
 }
 
-export default function Dashboard({ services, rules }: { services: Svc[]; rules: Rules }) {
+export default function Dashboard({ services, rules, mailOn }: { services: Svc[]; rules: Rules; mailOn: boolean }) {
   const [tab, setTab] = useState<"agenda" | "clients" | "messages" | "team">("agenda");
   const [unread, setUnread] = useState(0);
   const refreshUnread = useCallback(() => { api<{ unread: number }>("/api/admin/messages").then(r => r.ok && setUnread(r.data.unread)).catch(() => {}); }, []);
@@ -72,7 +72,7 @@ export default function Dashboard({ services, rules }: { services: Svc[]; rules:
         {tab === "agenda" && <Agenda services={services} />}
         {tab === "clients" && <Clients />}
         {tab === "messages" && <Messages onChange={refreshUnread} />}
-        {tab === "team" && <Team rules={rules} />}
+        {tab === "team" && <Team rules={rules} mailOn={mailOn} />}
       </main>
     </div>
   );
@@ -367,7 +367,7 @@ function Clients() {
                   <span role="cell">{c.next ? `${shortDate(c.next)}, ${time(c.next)}` : "—"}</span>
                   <span role="cell">{euros(c.spentCents)}</span>
                 </button>
-                {open === c.id && <ClientDetail c={c} />}
+                {open === c.id && <ClientDetail c={c} onDeleted={() => { setOpen(null); setList(l => l?.filter(x => x.id !== c.id) ?? null); }} />}
               </div>
             ))}
           </div>
@@ -377,12 +377,17 @@ function Clients() {
   );
 }
 
-function ClientDetail({ c }: { c: Client }) {
+function ClientDetail({ c, onDeleted }: { c: Client; onDeleted: () => void }) {
   const [hist, setHist] = useState<Appt[] | null>(null);
   const [notes, setNotes] = useState(c.notes);
   const [saved, setSaved] = useState("");
   useEffect(() => { api<{ history: Appt[] }>(`/api/admin/clients/${c.id}`).then(r => setHist(r.ok ? r.data.history : [])).catch(() => setHist([])); }, [c.id]);
   const save = async () => { const r = await api(`/api/admin/clients/${c.id}`, { method: "PATCH", body: JSON.stringify({ notes }) }); setSaved(r.ok ? "Enregistré." : "Échec de l’enregistrement."); };
+  const remove = async () => {
+    if (!window.confirm(`Supprimer définitivement ${c.firstName}${c.lastName !== "-" ? " " + c.lastName : ""} et tout son historique de rendez-vous ?`)) return;
+    const r = await api(`/api/admin/clients/${c.id}`, { method: "DELETE" });
+    if (r.ok) onDeleted(); else window.alert("La suppression a échoué.");
+  };
   return (
     <div className="dsh-detail">
       <div>
@@ -391,6 +396,7 @@ function ClientDetail({ c }: { c: Client }) {
         <label className="dsh-lbl" htmlFor={`n-${c.id}`}>Fiche (coupe habituelle, préférences…)</label>
         <textarea id={`n-${c.id}`} className="dsh-input" rows={4} value={notes} onChange={e => { setNotes(e.target.value); setSaved(""); }} />
         <div className="dsh-row dsh-row--end"><span className="dsh-muted">{saved}</span><button type="button" className="btn" onClick={save}>Enregistrer</button></div>
+        <button type="button" className="dsh-btn dsh-btn--danger" onClick={remove}>Supprimer ce client</button>
       </div>
       <div>
         <p className="dsh-lbl">Historique</p>
@@ -445,7 +451,7 @@ function Messages({ onChange }: { onChange: () => void }) {
 }
 
 /* ---------------- Équipe : coiffeurs, horaires, absences ---------------- */
-function Team({ rules }: { rules: Rules }) {
+function Team({ rules, mailOn }: { rules: Rules; mailOn: boolean }) {
   const [barbers, setBarbers] = useState<Barber[] | null>(null);
   const [absences, setAbsences] = useState<Absence[]>([]);
   const [newName, setNewName] = useState("");
@@ -501,6 +507,7 @@ function Team({ rules }: { rules: Rules }) {
               <li>Annulation en ligne jusqu’à <strong>{rules.cancelUntilHours} h</strong> avant.</li>
               <li>Au maximum <strong>{rules.maxActivePerClient} rendez-vous à venir</strong> par numéro.</li>
             </ul>
+            <p className={mailOn ? "dsh-ok" : "dsh-err"}>{mailOn ? "E-mails de confirmation activés : chaque client reçoit sa confirmation." : "E-mails de confirmation non configurés : ajoutez les variables SMTP dans Vercel (voir le README)."}</p>
           </section>
         </div>
       </div>

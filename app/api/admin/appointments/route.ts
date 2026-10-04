@@ -1,5 +1,7 @@
 import { body, fail, handle, json } from "@/lib/api";
-import { createAppointment } from "@/lib/booking/repo";
+import { after } from "next/server";
+import { mailClientBooked } from "@/lib/booking/mail";
+import { createAppointment, findByToken } from "@/lib/booking/repo";
 import { isDate, toMin } from "@/lib/booking/time";
 import * as v from "@/lib/booking/validate";
 
@@ -19,6 +21,8 @@ export function POST(req: Request) {
     if (bad.length) return json({ error: "invalid", fields: bad }, 400);
     const r = await createAppointment(input, { source: "salon", force: b.force === true });
     if (!r.ok) return fail(r.reason, 409);
+    // Confirmation par e-mail au client si son adresse a été saisie
+    if (input.email) after(async () => { const a = await findByToken(r.token); if (a) await mailClientBooked(a, r.token); });
     return json({ ok: true, id: r.id });
   }, { admin: true });
 }

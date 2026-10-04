@@ -17,9 +17,9 @@ export default function Privacy() {
       <h2>Responsable du traitement</h2>
       <p>{L.company}, {fullAddress}. Contact : {mail}.</p>
       <h2>Réservation en ligne</h2>
-      <p>Lorsque vous réservez, le salon enregistre votre prénom, votre nom, votre numéro de téléphone, votre adresse e-mail si vous la donnez, la prestation choisie, la date du rendez-vous et l’éventuelle précision que vous ajoutez. L’équipe peut aussi noter vos préférences de coupe pour mieux vous recevoir.</p>
+      <p>Lorsque vous réservez, le salon enregistre votre prénom, votre nom, votre numéro de téléphone, votre adresse e-mail, la prestation choisie, la date du rendez-vous et l’éventuelle précision que vous ajoutez. L’équipe peut aussi noter vos préférences de coupe pour mieux vous recevoir.</p>
       <ul>
-        <li><strong>Finalité :</strong> organiser et honorer votre rendez-vous, vous joindre en cas d’imprévu, vous envoyer la confirmation, tenir l’historique de vos passages.</li>
+        <li><strong>Finalité :</strong> organiser et honorer votre rendez-vous, vous joindre en cas d’imprévu, vous envoyer la confirmation par e-mail, tenir l’historique de vos passages.</li>
         <li><strong>Base légale :</strong> l’exécution de la prestation que vous demandez (mesures précontractuelles et contrat).</li>
         <li><strong>Destinataires :</strong> uniquement l’équipe du salon. Les données sont hébergées par nos prestataires techniques (hébergement du site, base de données, envoi des e-mails de confirmation), qui agissent pour le compte du salon.</li>
         <li><strong>Durée de conservation :</strong> 3 ans après votre dernier rendez-vous, puis suppression.</li>

@@ -8,7 +8,7 @@ import { icsHref } from "@/lib/booking/ics";
 import { fmtDay, fmtWhen, toMin } from "@/lib/booking/time";
 
 type Day = { date: string; slots: string[] };
-type Done = { token: string; start: number; end: number; barber: string | null };
+type Done = { token: string; start: number; end: number; barber: string | null; mailed: boolean; email: string };
 type BarberOpt = { id: string; name: string };
 type Form = { firstName: string; lastName: string; phone: string; email: string; note: string; website: string };
 
@@ -20,7 +20,7 @@ const MSG: Record<string, string> = {
   rate: "Trop de réservations depuis cette connexion. Réessayez un peu plus tard.",
   network: "La connexion a échoué. Vérifiez votre réseau et réessayez."
 };
-const FIELD: Record<string, string> = { firstName: "Indiquez votre prénom.", lastName: "Indiquez votre nom.", phone: "Indiquez un numéro de téléphone valide.", email: "Cette adresse e-mail n’est pas valide." };
+const FIELD: Record<string, string> = { firstName: "Indiquez votre prénom.", lastName: "Indiquez votre nom.", phone: "Indiquez un numéro de téléphone valide.", email: "Indiquez une adresse e-mail valide : la confirmation y est envoyée." };
 
 function scrollToEl(el: HTMLElement | null) {
   if (!el) return;
@@ -69,13 +69,13 @@ export default function BookingWizard({ initialService }: { initialService?: str
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!svc || !date || !time || sending) return;
-    const local = [!form.firstName.trim() && "firstName", !form.lastName.trim() && "lastName", form.phone.replace(/\D/g, "").length < 9 && "phone"].filter(Boolean) as string[];
+    const local = [!form.firstName.trim() && "firstName", !form.lastName.trim() && "lastName", form.phone.replace(/\D/g, "").length < 9 && "phone", !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim()) && "email"].filter(Boolean) as string[];
     if (local.length) { setErrs(local); return; }
     setSending(true); setMsg("");
     try {
       const r = await fetch("/api/bookings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId: svc.id, date, time, barberId, ...form }) });
       const j = await r.json().catch(() => ({}));
-      if (r.ok && j.token) { setDone({ token: j.token, start: j.start, end: j.end, barber: j.barber ?? null }); setTimeout(() => scrollToEl(topRef.current), 60); return; }
+      if (r.ok && j.token) { setDone({ token: j.token, start: j.start, end: j.end, barber: j.barber ?? null, mailed: !!j.mailed, email: j.email || form.email }); setTimeout(() => scrollToEl(topRef.current), 60); return; }
       if (j.error === "invalid") { setErrs(j.fields || []); return; }
       if (j.error === "unavailable") { setLoadErr("unavailable"); return; }
       setMsg(MSG[j.error] || MSG.network);
@@ -89,6 +89,7 @@ export default function BookingWizard({ initialService }: { initialService?: str
         <p className="label tick">Rendez-vous confirmé</p>
         <h2 className="bk-done-title">C’est réservé.</h2>
         <p className="lead bk-done-when">{svc.name}, {fmtWhen(done.start)}{done.barber ? `, avec ${done.barber}` : ""}.</p>
+        {done.mailed && <p className="bk-mailed">Un e-mail de confirmation vient d’être envoyé à <strong>{done.email}</strong>. Pensez à vérifier vos courriers indésirables.</p>}
         <dl className="bk-recap">
           <div><dt>Durée</dt><dd>{svc.duration}</dd></div>
           <div><dt>Tarif</dt><dd>{svc.price}, réglé au salon</dd></div>
@@ -98,7 +99,7 @@ export default function BookingWizard({ initialService }: { initialService?: str
           <a className="btn" href={icsHref({ uid: done.token, start: done.start, end: done.end, title: `${svc.name} — Finn’s Barber` })} download="finns-barber-rendez-vous.ics">Ajouter à mon agenda</a>
           <Link className="btn btn--ghost" href={`/rdv/${done.token}`}>Gérer mon rendez-vous</Link>
         </div>
-        <p className="bk-fine">Gardez le lien « Gérer mon rendez-vous » : il permet d’annuler jusqu’à {booking.cancelUntilHours} h avant. Merci d’arriver quelques minutes en avance.</p>
+        <p className="bk-fine">Le lien « Gérer mon rendez-vous » permet d’annuler jusqu’à {booking.cancelUntilHours} h avant. Merci d’arriver quelques minutes en avance.</p>
       </div>
     );
   }
@@ -190,7 +191,7 @@ export default function BookingWizard({ initialService }: { initialService?: str
               <Field id="firstName" label="Prénom" value={form.firstName} onChange={set("firstName")} err={errs.includes("firstName")} auto="given-name" />
               <Field id="lastName" label="Nom" value={form.lastName} onChange={set("lastName")} err={errs.includes("lastName")} auto="family-name" />
               <Field id="phone" label="Téléphone" type="tel" value={form.phone} onChange={set("phone")} err={errs.includes("phone")} auto="tel" hint="Le salon vous appelle en cas d’imprévu." />
-              <Field id="email" label="E-mail (facultatif)" type="email" value={form.email} onChange={set("email")} err={errs.includes("email")} auto="email" hint="Pour recevoir la confirmation." />
+              <Field id="email" label="E-mail" type="email" value={form.email} onChange={set("email")} err={errs.includes("email")} auto="email" hint="La confirmation vous est envoyée par e-mail." />
               <div className="bk-field bk-field--wide">
                 <label htmlFor="note">Une précision ? (facultatif)</label>
                 <textarea id="note" rows={3} maxLength={300} value={form.note} onChange={set("note")} placeholder="Coupe habituelle, demande particulière…" />
