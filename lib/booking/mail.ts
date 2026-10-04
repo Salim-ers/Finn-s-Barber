@@ -1,5 +1,5 @@
 /* =========================================================
-   E-MAILS — confirmation au client, copie au salon
+   E-MAILS — confirmation et rappel au client, copie au salon
    Deux façons d’envoyer (variables d’environnement Vercel) :
    • SMTP, par exemple un compte Gmail du salon avec un « mot de passe d’application » :
        SMTP_HOST=smtp.gmail.com  SMTP_PORT=465  SMTP_USER=…@gmail.com  SMTP_PASS=…
@@ -10,11 +10,11 @@
    ========================================================= */
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { salon } from "@/lib/data";
+import { booking, salon } from "@/lib/data";
 import { fullAddress, mapsUrl } from "@/lib/site";
 import { icsText } from "./ics";
 import type { Appointment } from "./repo";
-import { fmtWhen } from "./time";
+import { fmtWhen, hhmm, parisOf } from "./time";
 import { fmtPhone } from "./validate";
 
 type Attachment = { filename: string; content: string; contentType: string };
@@ -101,6 +101,15 @@ const ics = (a: Appointment, token: string, cancel = false): Attachment => ({
   contentType: `text/calendar; charset=utf-8; method=${cancel ? "CANCEL" : "PUBLISH"}`
 });
 
+/** Récapitulatif du rendez-vous (confirmation et rappel). */
+const recap = (a: Appointment, when: string) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${C.navy};margin:0 0 22px">
+          ${row("Prestation", `<strong>${esc(a.serviceName)}</strong> · ${a.minutes} min`)}
+          ${row("Quand", esc(when.charAt(0).toUpperCase() + when.slice(1)))}
+          ${a.barber ? row("Coiffeur", esc(a.barber.name)) : ""}
+          ${row("Tarif", `${price(a)}, réglé au salon`)}
+          ${row("Adresse", esc(fullAddress))}
+        </table>`;
+
 /* ---------- Réservation ---------- */
 export function mailClientBooked(a: Appointment, token: string) {
   const when = fmtWhen(a.start), who = a.barber ? ` avec ${a.barber.name}` : "";
@@ -112,13 +121,7 @@ export function mailClientBooked(a: Appointment, token: string) {
       kicker: "Rendez-vous confirmé",
       title: "C’est réservé.",
       intro: `Bonjour ${esc(a.client.firstName)}, votre rendez-vous est confirmé. À très vite au salon.`,
-      body: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${C.navy};margin:0 0 22px">
-          ${row("Prestation", `<strong>${esc(a.serviceName)}</strong> · ${a.minutes} min`)}
-          ${row("Quand", esc(when.charAt(0).toUpperCase() + when.slice(1)))}
-          ${a.barber ? row("Coiffeur", esc(a.barber.name)) : ""}
-          ${row("Tarif", `${price(a)}, réglé au salon`)}
-          ${row("Adresse", esc(fullAddress))}
-        </table>
+      body: `${recap(a, when)}
         ${btn(manageUrl(token), "Gérer ou annuler")}${btn(mapsUrl, "Itinéraire", false)}
         <p style="margin:14px 0 0;font:13px/1.6 Helvetica,Arial,sans-serif;color:${C.muted}">Le rendez-vous est joint à cet e-mail : ouvrez la pièce jointe pour l’ajouter à votre agenda. Annulation possible en ligne jusqu’à 2 h avant. Merci d’arriver quelques minutes en avance.</p>`
     }),
@@ -140,6 +143,25 @@ export function mailSalonBooked(a: Appointment) {
         </table>`
     }),
     text: `${a.client.firstName} ${a.client.lastName} — ${a.serviceName}, ${when}${a.barber ? ` avec ${a.barber.name}` : ""}\n${fmtPhone(a.client.phone)} ${a.client.email}\n${a.note}`
+  });
+}
+
+/* ---------- Rappel la veille ---------- */
+export function mailClientReminder(a: Appointment, token: string) {
+  const when = fmtWhen(a.start), at = hhmm(parisOf(a.start).min), who = a.barber ? ` avec ${a.barber.name}` : "";
+  return send({
+    to: a.client.email,
+    subject: `Rappel : votre rendez-vous demain à ${at}`,
+    html: layout({
+      preheader: `${a.serviceName}, demain à ${at}${who}. ${fullAddress}.`,
+      kicker: "Rappel",
+      title: "À demain.",
+      intro: `Bonjour ${esc(a.client.firstName)}, petit rappel : votre rendez-vous chez ${esc(salon.name)} est demain à ${at}.`,
+      body: `${recap(a, when)}
+        ${btn(manageUrl(token), "Gérer ou annuler")}${btn(mapsUrl, "Itinéraire", false)}
+        <p style="margin:14px 0 0;font:13px/1.6 Helvetica,Arial,sans-serif;color:${C.muted}">Un empêchement ? Annulez en ligne jusqu’à ${booking.cancelUntilHours} h avant pour libérer le créneau. Merci d’arriver quelques minutes en avance.</p>`
+    }),
+    text: `Bonjour ${a.client.firstName},\n\nPetit rappel : votre rendez-vous est demain à ${at}.\n${a.serviceName} (${a.minutes} min, ${price(a)})${who}\n${fullAddress}\n\nUn empêchement ? Annulez en ligne jusqu’à ${booking.cancelUntilHours} h avant : ${manageUrl(token)}\nItinéraire : ${mapsUrl}\n\n${salon.name}`
   });
 }
 

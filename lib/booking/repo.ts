@@ -193,6 +193,23 @@ export async function findByToken(token: string): Promise<Appointment | null> {
   return rows[0] ? toAppt(rows[0]) : null;
 }
 
+/** Réserve les rappels à envoyer : rendez-vous de demain, avec e-mail, pas encore rappelés.
+ *  Ceux pris il y a moins de 12 h sont laissés de côté : la confirmation vient de partir. */
+export async function claimReminders(): Promise<string[]> {
+  const day = addDays(today(), 1);
+  const rows = await (await db()).query(
+    `UPDATE appointments a SET reminded_at = now() FROM clients c
+     WHERE c.id = a.client_id AND a.status = 'confirmed' AND a.reminded_at IS NULL AND COALESCE(c.email, '') <> ''
+       AND a.starts_at >= $1::timestamptz AND a.starts_at < $2::timestamptz AND a.created_at < now() - interval '12 hours'
+     RETURNING a.token`,
+    [parisToDate(day, 0).toISOString(), parisToDate(addDays(day, 1), 0).toISOString()]);
+  return rows.map(r => String(r.token));
+}
+/** Remet un rappel en attente quand l’envoi a échoué (un nouvel appel le retentera). */
+export async function releaseReminder(token: string) {
+  await (await db()).query(`UPDATE appointments SET reminded_at = NULL WHERE token = $1`, [token]);
+}
+
 export async function cancelByToken(token: string): Promise<{ ok: true; appt: Appointment } | { ok: false; reason: "notfound" | "late" | "state" }> {
   const appt = await findByToken(token);
   if (!appt) return { ok: false, reason: "notfound" };

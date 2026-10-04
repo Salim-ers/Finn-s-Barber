@@ -9,6 +9,8 @@ export const metadata: Metadata = pageMeta("Politique de confidentialité | Finn
 
 const L = salon.legal;
 const mail = salon.email || <Todo />;
+// Service d’envoi des e-mails réellement configuré (voir lib/booking/mail.ts)
+const mailer = process.env.RESEND_API_KEY && !process.env.SMTP_HOST ? "Resend (Plus Five Five, Inc.)" : "Google (Gmail)";
 
 export default function Privacy() {
   return (
@@ -19,15 +21,23 @@ export default function Privacy() {
       <h2>Réservation en ligne</h2>
       <p>Lorsque vous réservez, le salon enregistre votre prénom, votre nom, votre numéro de téléphone, votre adresse e-mail, la prestation choisie, la date du rendez-vous et l’éventuelle précision que vous ajoutez. L’équipe peut aussi noter vos préférences de coupe pour mieux vous recevoir.</p>
       <ul>
-        <li><strong>Finalité :</strong> organiser et honorer votre rendez-vous, vous joindre en cas d’imprévu, vous envoyer la confirmation par e-mail, tenir l’historique de vos passages.</li>
+        <li><strong>Finalité :</strong> organiser et honorer votre rendez-vous, vous joindre en cas d’imprévu, vous envoyer la confirmation puis un rappel la veille par e-mail, tenir l’historique de vos passages.</li>
         <li><strong>Base légale :</strong> l’exécution de la prestation que vous demandez (mesures précontractuelles et contrat).</li>
-        <li><strong>Destinataires :</strong> uniquement l’équipe du salon. Les données sont hébergées par nos prestataires techniques (hébergement du site, base de données, envoi des e-mails de confirmation), qui agissent pour le compte du salon.</li>
+        <li><strong>Destinataires :</strong> uniquement l’équipe du salon, et les prestataires techniques listés plus bas, qui agissent pour son compte.</li>
         <li><strong>Durée de conservation :</strong> 3 ans après votre dernier rendez-vous, puis suppression.</li>
       </ul>
       <p>Une empreinte anonymisée de l’adresse IP est conservée avec chaque réservation, pour limiter les réservations abusives. Elle ne permet pas de retrouver l’adresse.</p>
       <p>Vous pouvez annuler un rendez-vous jusqu’à {booking.cancelUntilHours} h avant, grâce au lien personnel affiché après la réservation.</p>
       <h2>Formulaire de contact</h2>
       <p>Les messages envoyés depuis la page Contact (nom, téléphone et/ou e-mail, message) servent uniquement à vous répondre. Ils sont lus par l’équipe du salon et conservés 1 an au plus. Une empreinte anonymisée de l’adresse IP limite les envois abusifs.</p>
+      <h2>Prestataires techniques</h2>
+      <p>Ces sous-traitants traitent les données uniquement pour le compte du salon et selon ses instructions :</p>
+      <ul>
+        <li><strong>Vercel Inc.</strong> : hébergement du site.</li>
+        <li><strong>Neon Inc.</strong> : base de données des rendez-vous, des fiches clients et des messages.</li>
+        <li><strong>{mailer}</strong> : envoi des e-mails de confirmation, de rappel et d’annulation.</li>
+      </ul>
+      <p>Certains de ces prestataires sont établis hors de l’Union européenne, notamment aux États-Unis. Ces transferts sont encadrés par les garanties prévues par le RGPD : clauses contractuelles types de la Commission européenne ou cadre de protection des données UE–États-Unis (Data Privacy Framework).</p>
       <h2>Carte Google Maps</h2>
       <p>La carte de la page Contact n’est chargée qu’après votre accord. Google traite alors des données selon sa propre politique de confidentialité. Voir la page Gestion des cookies.</p>
       <h2>Données techniques</h2>

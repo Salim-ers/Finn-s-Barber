@@ -506,8 +506,9 @@ function Team({ rules, mailOn }: { rules: Rules; mailOn: boolean }) {
               <li>Au plus tôt <strong>{rules.leadMinutes} minutes</strong> à l’avance, au plus tard <strong>{rules.horizonDays} jours</strong> à l’avance.</li>
               <li>Annulation en ligne jusqu’à <strong>{rules.cancelUntilHours} h</strong> avant.</li>
               <li>Au maximum <strong>{rules.maxActivePerClient} rendez-vous à venir</strong> par numéro.</li>
+              <li>Rappel par e-mail <strong>la veille</strong>, en fin d’après-midi.</li>
             </ul>
-            <p className={mailOn ? "dsh-ok" : "dsh-err"}>{mailOn ? "E-mails de confirmation activés : chaque client reçoit sa confirmation." : "E-mails de confirmation non configurés : ajoutez les variables SMTP dans Vercel (voir le README)."}</p>
+            <p className={mailOn ? "dsh-ok" : "dsh-err"}>{mailOn ? "E-mails activés : chaque client reçoit sa confirmation et un rappel la veille." : "E-mails non configurés : ajoutez les variables SMTP dans Vercel (voir le README)."}</p>
           </section>
         </div>
       </div>

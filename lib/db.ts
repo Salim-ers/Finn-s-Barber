@@ -72,6 +72,8 @@ const SCHEMA = [
   )`,
   `CREATE INDEX IF NOT EXISTS absences_range_idx ON absences (starts_at, ends_at)`,
   `ALTER TABLE appointments ADD COLUMN IF NOT EXISTS barber_id uuid REFERENCES barbers(id) ON DELETE SET NULL`,
+  // Rappel par e-mail la veille
+  `ALTER TABLE appointments ADD COLUMN IF NOT EXISTS reminded_at timestamptz`,
   // Formulaire de contact
   `CREATE TABLE IF NOT EXISTS messages (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

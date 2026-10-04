@@ -63,7 +63,8 @@ Un coiffeur n’est proposé en ligne que pendant ses horaires, hors absences et
    - **Resend** (avec un nom de domaine vérifié sur resend.com) : `RESEND_API_KEY` et `MAIL_FROM` = `Finn’s Barber <rdv@votre-domaine.fr>`.
 
    L’onglet Équipe du tableau de bord indique si l’envoi est actif. Toute autre boîte e-mail (OVH, Ionos, Outlook…) fonctionne avec ses propres réglages SMTP.
-4. **Redéployez** (Deployments → ⋯ → Redeploy).
+4. **Rappel la veille** : une tâche planifiée (`vercel.json`, 16 h UTC, soit 17 h ou 18 h à Paris) envoie chaque jour un rappel aux clients qui ont rendez-vous le lendemain et ont donné leur e-mail. Rien à activer, sauf `CRON_SECRET` (conseillé) : une longue chaîne aléatoire, que Vercel joint à chaque appel de la tâche. Sur l’offre gratuite de Vercel, l’heure exacte varie dans l’heure prévue.
+5. **Redéployez** (Deployments → ⋯ → Redeploy).
 
 Tant que `DATABASE_URL` n’est pas configurée, la page de réservation affiche un message d’indisponibilité au lieu d’une erreur.
 
